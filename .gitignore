@@ -1,0 +1,8 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# production
+/config/__pycache__/*
+/football/__pycache__/*
+/football/migrations/__pycache__/*
+/venv/*
+!/venv/requirements.txt
