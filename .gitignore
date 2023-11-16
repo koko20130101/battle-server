@@ -6,3 +6,4 @@
 /football/migrations/__pycache__/*
 /venv/*
 !/venv/requirements.txt
+.vscode
