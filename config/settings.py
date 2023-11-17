@@ -167,12 +167,12 @@ REST_FRAMEWORK = {
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
         # 自定义token过期验证
-        'family.auth.ExpiringTokenAuthentication',
+        'common.auth.ExpiringTokenAuthentication',
         'rest_framework.authentication.BasicAuthentication',
         'rest_framework.authentication.SessionAuthentication',
         # 'rest_framework.authentication.TokenAuthentication',
     ],
     # 'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
     # 'PAGE_SIZE': 50,
-    'DEFAULT_PAGINATION_CLASS': 'FamilyOrigin.utils.NewPagination',
+    'DEFAULT_PAGINATION_CLASS': 'common.utils.NewPagination',
 }

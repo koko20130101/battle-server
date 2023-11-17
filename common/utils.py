@@ -3,7 +3,7 @@ import json
 import urllib.request
 import urllib.parse
 from Cryptodome.Cipher import AES
-from FamilyOrigin.settings import APP_ID, SECRET
+from config.settings import APP_ID, SECRET
 from django.core.cache import cache
 from rest_framework import status
 from rest_framework.request import Request
