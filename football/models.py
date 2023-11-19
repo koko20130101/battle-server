@@ -4,6 +4,8 @@ from django.contrib.auth.models import AbstractUser
 
 class Users(AbstractUser):
     '''用户'''
+    open_id = models.CharField(max_length=100, blank=False)
+    created = models.DateTimeField(auto_now_add=True)
     real_name = models.CharField(max_length=15, blank=True)
     nick_name = models.CharField(max_length=50, blank=True)
     # 常用名
@@ -11,26 +13,53 @@ class Users(AbstractUser):
     avatar = models.URLField(blank=True)
     # 所属俱乐部
     clubs = models.ManyToManyField(
-        'football.Clubs', related_name='',through='football.UsersClubs')
+        'football.Clubs', related_name='clubs_set',through='football.UsersClubs')
+    
+    class Meta:
+        db_table = 'fb_users'
 
 
 class Clubs(models.Model):
     '''俱乐部'''
     club_name = models.CharField(max_length=50)
     brief = models.TextField(blank=True)
+    # 荣誉值
+    honor = models.IntegerField(default=0)
+    # 加入是否需要审核
+    need_apply = models.BooleanField(default=True)
     # 成员
     members = models.ManyToManyField(
-        'football.Users', through='football.UsersClubs')
+        'football.Users',related_name='users_set', through='football.UsersClubs')
+    
+    class Meta:
+        db_table = 'clubs'
 
 
 class UsersClubs(models.Model):
     '''用户<==>俱乐部，多对多中间表'''
-    user = models.ForeignKey(
+    use = models.ForeignKey(
         'football.Users',  on_delete=models.CASCADE)
     club = models.ForeignKey(
         'football.Clubs',  on_delete=models.CASCADE)
     # 用户在俱乐部中的角色， 1：超级管理  2：管理员  3：会员
     role = models.IntegerField(default=3)
+
+    class Meta:
+        db_table = 'fb_users_clubs'
+
+class Account(models.Model):
+    '''优惠账户'''
+    # 余额
+    balance = models.FloatField(blank=True)
+    # 对应用户
+    user = models.ForeignKey('football.Users',on_delete=models.CASCADE)
+    # 对应俱乐部
+    club = models.ForeignKey('football.Clubs',on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = 'fb_account'
+
+
 
 
 class Games(models.Model):
@@ -54,6 +83,9 @@ class Games(models.Model):
     # 参赛人员
     members = models.ForeignKey(
         'football.GameMembers',  on_delete=models.CASCADE)
+    
+    class Meta:
+        db_table = 'fb_games'
 
 
 class GameMembers(models.Model):
@@ -68,6 +100,9 @@ class GameMembers(models.Model):
     # 费用
     cost = models.FloatField(blank=True)
 
+    class Meta:
+        db_table = 'fb_game_members'
+
 
 class Apply(models.Model):
     '''申请加入俱乐部'''
@@ -80,12 +115,18 @@ class Apply(models.Model):
     # 申请要加入的俱乐部
     club = models.ForeignKey(
         'football.Clubs', on_delete=models.CASCADE, null=True)
+    
+    class Meta:
+        db_table = 'fb_apply'
 
 
-class ImageUpload(models.Model):
+class UploadImages(models.Model):
     '''上传的图片'''
     height = models.PositiveIntegerField(default=75)
     width = models.PositiveIntegerField(default=75)
     image_type = models.IntegerField(default=1)
     image_url = models.ImageField(
         upload_to='upload', height_field='height', width_field='width')
+    
+    class Meta:
+            db_table = 'fb_upload_imges'

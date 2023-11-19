@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Users
+from .models import Users,Clubs
 
 
 class UsersSerializer(serializers.ModelSerializer):
@@ -15,3 +15,9 @@ class UsersSerializer(serializers.ModelSerializer):
             if field_name in usefields:
                 resData[field_name] = data[field_name]
         return resData
+
+class ClubsSerializer(serializers.ModelSerializer):
+    # role = serializers.ReadOnlyField(source='members.id')
+    class Meta:
+        model = Clubs
+        fields = '__all__'

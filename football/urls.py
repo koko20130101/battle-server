@@ -4,7 +4,7 @@ from football import views
 
 router = DefaultRouter(trailing_slash=False)
 router.register(r'users', views.UsersViewSet)
-# router.register(r'family', views.FamilyViewSet)
+router.register(r'clubs', views.ClubsViewSet)
 # router.register(r'ranks', views.RanksViewSet)
 # router.register(r'members', views.MembersViewSet)
 # router.register(r'apply', views.ApplyViewSet)
