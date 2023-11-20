@@ -7,8 +7,8 @@ from rest_framework.views import APIView
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
-from football.serializers import UsersSerializer,ClubsSerializer
-from football.models import Users,Clubs
+from football.serializers import UsersSerializer, ClubsSerializer, UploadImagesSerializer, ClubsDetailsSerializer
+from football.models import Users, Clubs, UploadImages
 from football.permissions import IsOwnerOrReadOnly
 from config.settings import APP_ID, SECRET
 from common.utils import getSessionInfo
@@ -42,7 +42,7 @@ class UsersViewSet(viewsets.ModelViewSet):
 
         sessionInfo = getSessionInfo(jsCode, APP_ID, SECRET)
         if not sessionInfo.get('openid'):
-                return Response({'msg': 'jsCode失效'}, status.HTTP_503_SERVICE_UNAVAILABLE)
+            return Response({'msg': 'jsCode失效'}, status.HTTP_503_SERVICE_UNAVAILABLE)
         else:
             openId = sessionInfo['openid']
 
@@ -93,33 +93,55 @@ class UsersViewSet(viewsets.ModelViewSet):
                     return Response({'msg': serializer.errors})
         else:
             return Response({'msg': 'jsCOde不能为空'}, status.HTTP_503_SERVICE_UNAVAILABLE)
-        
+
 
 class ClubsViewSet(viewsets.ModelViewSet):
     '''俱乐部视图集'''
     queryset = Clubs.objects.all()
     serializer_class = ClubsSerializer
-    # permission_classes = [ permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    # 对特定字段进行排序,指定排序的字段
+    ordering_fields = ['id', 'honor']
 
-    # def list(self, request, *args, **kwargs):
-    #     print(11)
-    #     queryset = self.filter_queryset(
-    #         self.get_queryset()).filter(status=True)
-    #     page = self.paginate_queryset(queryset)
-    #     if page is not None:
-    #         serializer = self.get_serializer(page, many=True)
-    #     serializer = self.get_serializer(queryset, many=True)
-    #     return Response(serializer.data, status.HTTP_200_OK)
-    
-    # def perform_destroy(self, instance):
-    #    # 不能删除
-    #     raise exceptions.AuthenticationFailed(
-    #         {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
-    
-    # def create(self, request, *args, **kwargs):
-    #     print(55)
-    #     user = request.user
-    #     serializer = self.get_serializer(data=request.data)
-    #     if serializer.is_valid():
-    #         club = serializer.save()
-    #         return Response(serializer.data, status.HTTP_200_OK)
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+        else:
+            serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status.HTTP_200_OK)
+
+    def retrieve(self, request, *args, **kwargs):
+        # 详情
+        instance = self.get_object()
+        serializer = ClubsDetailsSerializer(instance)
+        return Response(serializer.data)
+
+    def perform_destroy(self, instance):
+       # 不能删除
+        raise exceptions.AuthenticationFailed(
+            {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
+
+    def create(self, request, *args, **kwargs):
+        user = request.user
+        serializer = self.get_serializer(data=request.data)
+        if serializer.is_valid():
+            club = serializer.save()
+            # 为创建者设置超级管理员角色
+            club.members.add(user, through_defaults={'role': 1})
+            return Response({'msg': '创建成功'}, status.HTTP_200_OK)
+
+
+class ImageUploadViewSet(viewsets.ModelViewSet):
+    '''上传图片视图集'''
+    queryset = UploadImages.objects.all()
+    serializer_class = UploadImagesSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_200_OK, headers=headers)

@@ -1,4 +1,4 @@
-import datetime
+from datetime import datetime, timedelta
 import pytz
 # from django.utils.translation import ugettext_lazy
 from django.core.cache import cache
@@ -37,6 +37,7 @@ class ExpiringTokenAuthentication(BaseAuthentication):
     def authenticate_credentials(self, key):
         token_cache = 'token_' + key
         cache_user = cache.get(token_cache)
+
         if cache_user:
             return cache_user, cache_user
         try:
@@ -48,7 +49,8 @@ class ExpiringTokenAuthentication(BaseAuthentication):
         if not token.user.is_active:
             raise exceptions.AuthenticationFailed(
                 {'status': status.HTTP_403_FORBIDDEN, 'msg': '用户被禁用，请联系管理员'})
-        if token.created < (datetime.datetime.now() - datetime.timedelta(days=90)):
+
+        if token.created.timestamp() < (datetime.now() - timedelta(days=90)).timestamp():
             raise exceptions.AuthenticationFailed(
                 {'status': status.HTTP_401_UNAUTHORIZED, 'msg': '登录过期，请重新登录'})
 

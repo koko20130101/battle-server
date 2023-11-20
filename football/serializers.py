@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Users,Clubs
+from .models import Users, Clubs, UploadImages
 
 
 class UsersSerializer(serializers.ModelSerializer):
@@ -16,8 +16,20 @@ class UsersSerializer(serializers.ModelSerializer):
                 resData[field_name] = data[field_name]
         return resData
 
+
 class ClubsSerializer(serializers.ModelSerializer):
-    # role = serializers.ReadOnlyField(source='members.id')
     class Meta:
         model = Clubs
+        fields = ['id','club_name','club_logo','sort','honor']
+
+class ClubsDetailsSerializer(serializers.ModelSerializer):
+    members = UsersSerializer(many=True)
+    class Meta:
+        model = Clubs
+        fields = '__all__'
+
+
+class UploadImagesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UploadImages
         fields = '__all__'

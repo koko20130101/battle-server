@@ -143,9 +143,9 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
-# 吴氏三冬小程序ID和秘钥
-APP_ID = 'wx72a252bb8cdfdbbd'
-SECRET = '77c74733d205a4f2e56edd8c58679349'
+# “约球了”小程序ID和秘钥
+APP_ID = 'wxfae4ccacf0464799'
+SECRET = 'c94a87c176164dc191c5109b6ed2b928'
 
 # 资源保存路径
 MEDIA_ROOT = '/root/assets/'

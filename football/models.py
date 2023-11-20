@@ -13,8 +13,8 @@ class Users(AbstractUser):
     avatar = models.URLField(blank=True)
     # 所属俱乐部
     clubs = models.ManyToManyField(
-        'football.Clubs', related_name='clubs_set',through='football.UsersClubs')
-    
+        'football.Clubs', related_name='clubs_set', through='football.UsersClubs')
+
     class Meta:
         db_table = 'fb_users'
 
@@ -22,17 +22,20 @@ class Users(AbstractUser):
 class Clubs(models.Model):
     '''俱乐部'''
     club_name = models.CharField(max_length=50)
+    club_logo = models.TextField(blank=True)
     brief = models.TextField(blank=True)
+    # 排序
+    sort = models.IntegerField(default=0)
     # 荣誉值
     honor = models.IntegerField(default=0)
     # 加入是否需要审核
     need_apply = models.BooleanField(default=True)
     # 成员
     members = models.ManyToManyField(
-        'football.Users',related_name='users_set', through='football.UsersClubs')
-    
+        'football.Users', related_name='users_set', through='football.UsersClubs')
+
     class Meta:
-        db_table = 'clubs'
+        db_table = 'fb_clubs'
 
 
 class UsersClubs(models.Model):
@@ -47,19 +50,18 @@ class UsersClubs(models.Model):
     class Meta:
         db_table = 'fb_users_clubs'
 
+
 class Account(models.Model):
     '''优惠账户'''
     # 余额
     balance = models.FloatField(blank=True)
     # 对应用户
-    user = models.ForeignKey('football.Users',on_delete=models.CASCADE)
+    user = models.ForeignKey('football.Users', on_delete=models.CASCADE)
     # 对应俱乐部
-    club = models.ForeignKey('football.Clubs',on_delete=models.CASCADE)
+    club = models.ForeignKey('football.Clubs', on_delete=models.CASCADE)
 
     class Meta:
         db_table = 'fb_account'
-
-
 
 
 class Games(models.Model):
@@ -83,7 +85,7 @@ class Games(models.Model):
     # 参赛人员
     members = models.ForeignKey(
         'football.GameMembers',  on_delete=models.CASCADE)
-    
+
     class Meta:
         db_table = 'fb_games'
 
@@ -115,7 +117,7 @@ class Apply(models.Model):
     # 申请要加入的俱乐部
     club = models.ForeignKey(
         'football.Clubs', on_delete=models.CASCADE, null=True)
-    
+
     class Meta:
         db_table = 'fb_apply'
 
@@ -127,6 +129,6 @@ class UploadImages(models.Model):
     image_type = models.IntegerField(default=1)
     image_url = models.ImageField(
         upload_to='upload', height_field='height', width_field='width')
-    
+
     class Meta:
-            db_table = 'fb_upload_imges'
+        db_table = 'fb_upload_imges'
