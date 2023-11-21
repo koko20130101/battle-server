@@ -13,7 +13,7 @@ class Users(AbstractUser):
     avatar = models.URLField(blank=True)
     # 所属俱乐部
     clubs = models.ManyToManyField(
-        'football.Clubs', related_name='clubs_set', through='football.UsersClubs')
+        'football.Clubs', related_name='users_set', through='football.UsersClubs')
 
     class Meta:
         db_table = 'fb_users'
@@ -32,7 +32,7 @@ class Clubs(models.Model):
     need_apply = models.BooleanField(default=True)
     # 成员
     members = models.ManyToManyField(
-        'football.Users', related_name='users_set', through='football.UsersClubs')
+        'football.Users', related_name='clubs_set', through='football.UsersClubs')
 
     class Meta:
         db_table = 'fb_clubs'
@@ -40,10 +40,10 @@ class Clubs(models.Model):
 
 class UsersClubs(models.Model):
     '''用户<==>俱乐部，多对多中间表'''
-    use = models.ForeignKey(
-        'football.Users',  on_delete=models.CASCADE)
+    user = models.ForeignKey(
+        'football.Users', related_name='users_clubs_set', on_delete=models.CASCADE)
     club = models.ForeignKey(
-        'football.Clubs',  on_delete=models.CASCADE)
+        'football.Clubs', related_name='users_clubs_set', on_delete=models.CASCADE)
     # 用户在俱乐部中的角色， 1：超级管理  2：管理员  3：会员
     role = models.IntegerField(default=3)
 

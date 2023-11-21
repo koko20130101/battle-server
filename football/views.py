@@ -8,7 +8,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from football.serializers import UsersSerializer, ClubsSerializer, UploadImagesSerializer, ClubsDetailsSerializer
-from football.models import Users, Clubs, UploadImages
+from football.models import Users, Clubs, UsersClubs, UploadImages
 from football.permissions import IsOwnerOrReadOnly
 from config.settings import APP_ID, SECRET
 from common.utils import getSessionInfo
@@ -114,23 +114,64 @@ class ClubsViewSet(viewsets.ModelViewSet):
 
     def retrieve(self, request, *args, **kwargs):
         # 详情
+        user = request.user
         instance = self.get_object()
         serializer = ClubsDetailsSerializer(instance)
-        return Response(serializer.data)
+        source = serializer.data
+        ids = list(i['id'] for i in source['members'])
+        if user.id not in ids:
+            # 非会员，删除相应数据
+            del source['members']
+            # 标记非会员
+            source['notJoin'] = True
+        return Response(source)
 
     def perform_destroy(self, instance):
        # 不能删除
         raise exceptions.AuthenticationFailed(
             {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
 
-    def create(self, request, *args, **kwargs):
-        user = request.user
-        serializer = self.get_serializer(data=request.data)
+    def perform_create(self, serializer):
+        # 创建队伍
+        user = self.request.user
+        serializer = self.get_serializer(data=self.request.data)
         if serializer.is_valid():
             club = serializer.save()
             # 为创建者设置超级管理员角色
             club.members.add(user, through_defaults={'role': 1})
             return Response({'msg': '创建成功'}, status.HTTP_200_OK)
+
+    def perform_update(self, serializer):
+        id = self.request.data.get('id')
+        user = self.request.user
+        instance = self.get_object()
+        # 通过club的实例instance来查找中间表（UsersClubs）数据
+        user_blub = instance.users_clubs_set.all().values().filter(
+            user_id=user.id, club_id=id).first()
+        if user_blub.get('role') == 1:
+            # 只有超级管理员可以修改
+            serializer.save(data=self.request.data)
+            return Response({'msg': '修改成功'}, status.HTTP_200_OK)
+        else:
+            raise exceptions.AuthenticationFailed(
+                {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
+
+    @action(methods=['POST'], detail=False, permission_classes=[])
+    def join(self, request, *args, **kwargs):
+        # 加入队伍
+        clubId = request.data.get('id')
+        user = request.user
+        if not user.id:
+            return Response({'msg': '您还未登录', }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        else:
+            user_blub = instance.users_clubs_set.all().values().filter(
+                user_id=user.id, club_id=id).first()
+            if not user_blub:
+                instance = self.get_queryset().get(id=clubId)
+                instance.members.add(user, through_defaults={'role': 3})
+                return Response({'msg': '加入成功'}, status.HTTP_200_OK)
+            else:
+                return Response({'msg': '你已经是成员了'}, status.HTTP_200_OK)
 
 
 class ImageUploadViewSet(viewsets.ModelViewSet):
