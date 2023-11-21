@@ -117,19 +117,29 @@ class ClubsViewSet(viewsets.ModelViewSet):
         user = request.user
         instance = self.get_object()
         serializer = ClubsDetailsSerializer(instance)
+        user_blub = instance.users_clubs_set.all().values().filter(
+            user_id=user.id, club_id=instance.id).first()
         source = serializer.data
-        ids = list(i['id'] for i in source['members'])
-        if user.id not in ids:
-            # 非会员，删除相应数据
+        if not user.id or not user_blub:
+            # 未注册和非会员，删除相应数据
             del source['members']
             # 标记非会员
             source['notJoin'] = True
         return Response(source)
 
     def perform_destroy(self, instance):
-       # 不能删除
-        raise exceptions.AuthenticationFailed(
-            {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
+        # 删除球队
+        user = self.request.user
+        # 通过club的实例instance来查找中间表（UsersClubs）数据
+        user_blub = instance.users_clubs_set.all().values().filter(
+            user_id=user.id, club_id=instance.id).first()
+        if not user_blub:
+            raise exceptions.AuthenticationFailed(
+                {'status': status.HTTP_403_FORBIDDEN, 'msg': '您无权操作'})
+        if user_blub.get('role') == 1:
+            # 只有超级管理员可以删除
+            instance.delete()
+            return Response({'msg': '删除成功'}, status.HTTP_200_OK)
 
     def perform_create(self, serializer):
         # 创建队伍
@@ -142,12 +152,15 @@ class ClubsViewSet(viewsets.ModelViewSet):
             return Response({'msg': '创建成功'}, status.HTTP_200_OK)
 
     def perform_update(self, serializer):
-        id = self.request.data.get('id')
+        # 编辑
         user = self.request.user
         instance = self.get_object()
         # 通过club的实例instance来查找中间表（UsersClubs）数据
         user_blub = instance.users_clubs_set.all().values().filter(
-            user_id=user.id, club_id=id).first()
+            user_id=user.id, club_id=instance.id).first()
+        if not user_blub:
+            raise exceptions.AuthenticationFailed(
+                {'status': status.HTTP_403_FORBIDDEN, 'msg': '记录不存在'})
         if user_blub.get('role') == 1:
             # 只有超级管理员可以修改
             serializer.save(data=self.request.data)

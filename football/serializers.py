@@ -20,7 +20,7 @@ class UsersSerializer(serializers.ModelSerializer):
 class ClubsSerializer(serializers.ModelSerializer):
     class Meta:
         model = Clubs
-        fields = ['id','club_name','club_logo','sort','honor']
+        fields = ['id','club_name','club_logo','sort','honor','brief']
 
 class ClubsDetailsSerializer(serializers.ModelSerializer):
     members = UsersSerializer(many=True)
