@@ -157,7 +157,7 @@ class ClubsViewSet(viewsets.ModelViewSet):
             user_id=user.id, club_id=instance.id).first()
         if not user_blub:
             raise exceptions.AuthenticationFailed(
-                {'status': status.HTTP_403_FORBIDDEN, 'msg': '记录不存在'})
+                {'status': status.HTTP_403_FORBIDDEN, 'msg': '您无权操作'})
         if user_blub.get('role') == 1:
             # 只有超级管理员可以修改
             serializer.save(data=self.request.data)
@@ -197,7 +197,7 @@ class ClubsViewSet(viewsets.ModelViewSet):
         else:
             user_blub = instance.users_clubs_set.all().values().filter(
                 user_id=user.id, club_id=clubId).first()
-            if user_blub.get('role') == 1:
+            if (user_blub.get('role') == 1 or instance.creator.id == user.id) and instance.creator.id != userId:
                 instance.members.remove(userId)
                 return Response({'msg': '移出成功'}, status.HTTP_200_OK)
             else:
