@@ -23,6 +23,12 @@ class Clubs(models.Model):
     '''俱乐部'''
     club_name = models.CharField(max_length=50)
     club_logo = models.TextField(blank=True)
+    # 创建者
+    creator = models.ForeignKey(
+        'football.Users', related_name='clubs_set1', on_delete=models.DO_NOTHING, null=True)
+    # 队长
+    captain = models.ForeignKey(
+        'football.Users', related_name='clubs_set2', on_delete=models.DO_NOTHING, null=True)
     brief = models.TextField(blank=True)
     # 排序
     sort = models.IntegerField(default=0)
@@ -36,6 +42,7 @@ class Clubs(models.Model):
 
     class Meta:
         db_table = 'fb_clubs'
+        ordering = ('id',)
 
 
 class UsersClubs(models.Model):
