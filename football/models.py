@@ -117,16 +117,18 @@ class Apply(models.Model):
     '''申请加入俱乐部'''
     # 申请时间
     created = models.DateTimeField(auto_now_add=True)
-    # 申请人姓名
-    applicant_name = models.CharField(max_length=15, blank=True)
-    # 常用称呼
-    common_name = models.CharField(max_length=15, blank=True)
+    # 备注
+    remarks = models.TextField(max_length=50, null=True)
+    # 申请人
+    apply_user = models.ForeignKey(
+        'football.Users', on_delete=models.CASCADE, null=True)
     # 申请要加入的俱乐部
     club = models.ForeignKey(
         'football.Clubs', on_delete=models.CASCADE, null=True)
 
     class Meta:
         db_table = 'fb_apply'
+        ordering = ('id',)
 
 
 class UploadImages(models.Model):

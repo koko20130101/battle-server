@@ -7,9 +7,9 @@ from rest_framework.views import APIView
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
-from football.serializers import UsersSerializer, ClubsSerializer, ClubsDetailsSerializer, UploadImagesSerializer
-from football.models import Users, Clubs, UploadImages
-from football.permissions import IsOwnerOrReadOnly
+from football.serializers import UsersSerializer, ClubsSerializer, ClubsDetailsSerializer, ApplySerializer, UploadImagesSerializer
+from football.models import Users, Clubs, Apply, UploadImages
+from football.permissions import IsOwner
 from config.settings import APP_ID, SECRET
 from common.utils import getSessionInfo
 from PIL import Image
@@ -135,7 +135,6 @@ class ClubsViewSet(viewsets.ModelViewSet):
             club = serializer.save(creator=user)
             # 为创建者设置超级管理员角色
             club.members.add(user, through_defaults={'role': 1})
-            print(club)
             return Response({'msg': '创建成功'}, status.HTTP_200_OK)
 
     def perform_destroy(self, instance):
@@ -165,11 +164,12 @@ class ClubsViewSet(viewsets.ModelViewSet):
             raise exceptions.AuthenticationFailed(
                 {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
 
-    @action(methods=['POST'], detail=False, permission_classes=[])
+    @action(methods=['POST'], detail=False, permission_classes=[permissions.IsAuthenticated])
     def join(self, request, *args, **kwargs):
         # 直接加入
         clubId = request.data.get('id')
         user = request.user
+        print(11)
         instance = self.get_queryset().get(id=clubId)
         if not user.id:
             return Response({'msg': '您还未登录', }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
@@ -184,25 +184,117 @@ class ClubsViewSet(viewsets.ModelViewSet):
         else:
             return Response({'msg': '你已经是成员了'}, status.HTTP_200_OK)
 
-    @action(methods=['POST'], detail=False, permission_classes=[])
+    @action(methods=['POST'], detail=False, permission_classes=[permissions.IsAuthenticated])
     def remove(self, request, *args, **kwargs):
         # 移出
-        clubId = request.data.get('id')
+        clubId = request.data.get('club')
         userId = request.data.get('member')
         user = request.user
-        instance = self.get_queryset().get(id=clubId)
 
-        if not user.id:
-            return Response({'msg': '您还未登录', }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        if not clubId:
+            return Response({'msg': '球队ID不能为空'}, status.HTTP_503_SERVICE_UNAVAILABLE)
+        if not userId:
+            return Response({'msg': '用户ID不能为空'}, status.HTTP_503_SERVICE_UNAVAILABLE)
+
+        instance = self.get_queryset().get(id=clubId)
+        user_blub = instance.users_clubs_set.all().values().filter(
+            user_id=user.id, club_id=clubId).first()
+        # print(user.id)
+        print(user_blub)
+        print(str(user.id) == userId)
+        if (str(user.id) == userId or (user_blub and user_blub.get('role') in [1, 2])) and str(instance.creator.id) != userId:
+            instance.members.remove(userId)
+            return Response({'msg': '移出成功'}, status.HTTP_200_OK)
         else:
-            user_blub = instance.users_clubs_set.all().values().filter(
-                user_id=user.id, club_id=clubId).first()
-            if (user_blub.get('role') == 1 or instance.creator.id == user.id) and instance.creator.id != userId:
-                instance.members.remove(userId)
-                return Response({'msg': '移出成功'}, status.HTTP_200_OK)
+            raise exceptions.AuthenticationFailed(
+                {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
+
+
+class ApplyViewSet(viewsets.ModelViewSet):
+    queryset = Apply.objects.all()
+    serializer_class = ApplySerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def list(self, request, *args, **kwargs):
+        # 申请列表
+        clubId = request.data.get('club')
+        user = request.user
+        club = Clubs.objects.filter(creator=user.id, id=clubId).first()
+        if club:
+            queryset = self.filter_queryset(
+                self.get_queryset()).filter(club=clubId)
+            page = self.paginate_queryset(queryset)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+            else:
+                serializer = self.get_serializer(queryset, many=True)
+            return Response(serializer.data)
+        else:
+            return Response({'msg': '找不到球队记录'}, status.HTTP_503_SERVICE_UNAVAILABLE)
+
+    def create(self, request, *args, **kwargs):
+        # 申请
+        clubId = request.data.get('club')
+        user = request.user
+
+        if clubId:
+            club = Clubs.objects.get(id=clubId)
+            if club.need_apply:
+                # 需要审核
+                apply = self.get_queryset().filter(
+                    club=club.id, apply_user=user.id).first()
+                if apply:
+                    return Response({'msg': '您已提交申请，请耐心等待管理员审核'}, status.HTTP_503_SERVICE_UNAVAILABLE)
+                else:
+                    applyData = {
+                        'club': club.id,
+                        'apply_user': user.id,
+                        'remarks': request.data.get('remarks')
+                    }
+                    serializer = self.get_serializer(data=applyData)
+                    serializer.is_valid(raise_exception=True)
+                    serializer.save()
+                    return Response({'msg': '申请成功，请耐心等待管理员审核'}, status.HTTP_200_OK)
+            else:
+                # 不需要审核，直接加入
+                club.members.add(user, through_defaults={'role': 3})
+                return Response({'msg': '加入成功'}, status.HTTP_200_OK)
+
+        else:
+            raise exceptions.AuthenticationFailed(
+                {'status': status.HTTP_403_FORBIDDEN, 'msg': '请选择要加入的球队'})
+
+    def perform_destroy(self, instance):
+        # 拒绝并删除
+        user = self.request.user
+        clubId = self.request.data.get('club')
+        club = Clubs.objects.get(id=clubId)
+        if club and club.creator.id == user.id:
+            # 只有club的创建者才可以删除
+            instance.delete()
+        else:
+            raise exceptions.AuthenticationFailed(
+                {'status': status.HTTP_403_FORBIDDEN, 'msg': '您无权操作'})
+
+    @action(methods=['POST'], detail=False, permission_classes=[permissions.IsAuthenticated])
+    def agree(self, request, *args, **kwargs):
+        # 通过审核
+        user = request.user
+        applyId = request.data.get('applyId')
+        clubId = request.data.get('club')
+        club = Clubs.objects.get(id=clubId)
+        if club and club.creator.id == user.id:
+            apply = self.get_queryset().filter(id=applyId).first()
+            if apply:
+                club.members.add(apply.apply_user)
+                apply.delete()
+                return Response({'msg': '加入成功'}, status.HTTP_200_OK)
             else:
                 raise exceptions.AuthenticationFailed(
-                    {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
+                    {'status': status.HTTP_403_FORBIDDEN, 'msg': '找不到记录'})
+        else:
+            raise exceptions.AuthenticationFailed(
+                {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
 
 
 class ImageUploadViewSet(viewsets.ModelViewSet):

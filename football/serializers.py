@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Users, Clubs, UsersClubs, UploadImages
+from .models import Users, Clubs, UsersClubs, Apply, UploadImages
 
 
 class UsersSerializer(serializers.ModelSerializer):
@@ -56,6 +56,14 @@ class ClubsDetailsSerializer(serializers.ModelSerializer):
 class UserClubsSerializer(serializers.ModelSerializer):
     class Meta:
         model = UsersClubs
+        fields = '__all__'
+
+
+class ApplySerializer(serializers.ModelSerializer):
+    nick_name = serializers.ReadOnlyField(source='apply_user.nick_name')
+    avatar = serializers.ReadOnlyField(source='apply_user.avatar')
+    class Meta:
+        model = Apply
         fields = '__all__'
 
 
