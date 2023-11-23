@@ -151,14 +151,8 @@ class ClubsViewSet(viewsets.ModelViewSet):
         # 编辑
         user = self.request.user
         instance = self.get_object()
-        # 通过club的实例instance来查找中间表（UsersClubs）数据
-        user_blub = instance.users_clubs_set.all().values().filter(
-            user_id=user.id, club_id=instance.id).first()
-        if not user_blub:
-            raise exceptions.AuthenticationFailed(
-                {'status': status.HTTP_403_FORBIDDEN, 'msg': '您无权操作'})
-        if user_blub.get('role') == 1:
-            # 只有超级管理员可以修改
+        if instance.creator.id == user.id:
+            # 只有创建者可以修改
             serializer.save(data=self.request.data)
         else:
             raise exceptions.AuthenticationFailed(
@@ -169,7 +163,6 @@ class ClubsViewSet(viewsets.ModelViewSet):
         # 直接加入
         clubId = request.data.get('id')
         user = request.user
-        print(11)
         instance = self.get_queryset().get(id=clubId)
         if not user.id:
             return Response({'msg': '您还未登录', }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
