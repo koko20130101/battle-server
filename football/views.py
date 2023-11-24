@@ -223,7 +223,7 @@ class ApplyViewSet(viewsets.ModelViewSet):
                 serializer = self.get_serializer(queryset, many=True)
             return Response(serializer.data)
         else:
-            return Response({'msg': '找不到球队记录'}, status.HTTP_503_SERVICE_UNAVAILABLE)
+            return Response({'msg': '找不到记录'}, status.HTTP_503_SERVICE_UNAVAILABLE)
 
     def create(self, request, *args, **kwargs):
         # 申请
@@ -258,33 +258,32 @@ class ApplyViewSet(viewsets.ModelViewSet):
                 {'status': status.HTTP_403_FORBIDDEN, 'msg': '请选择要加入的球队'})
 
     def perform_destroy(self, instance):
-        # 拒绝并删除
-        user = self.request.user
-        clubId = self.request.data.get('club')
-        club = Clubs.objects.get(id=clubId)
-        if club and club.creator.id == user.id:
-            # 只有club的创建者才可以删除
-            instance.delete()
-        else:
-            raise exceptions.AuthenticationFailed(
-                {'status': status.HTTP_403_FORBIDDEN, 'msg': '您无权操作'})
+        raise exceptions.AuthenticationFailed(
+            {'status': status.HTTP_403_FORBIDDEN, 'msg': '您无权操作'})
 
     @action(methods=['POST'], detail=False, permission_classes=[permissions.IsAuthenticated])
     def agree(self, request, *args, **kwargs):
-        # 通过审核
+        # 是否通过审核
         user = request.user
         applyId = request.data.get('applyId')
         clubId = request.data.get('club')
+        # active 为1：通过，2：拒绝
+        active = request.data.get('active')
         club = Clubs.objects.get(id=clubId)
+        if not applyId:
+            raise exceptions.AuthenticationFailed(
+                {'status': status.HTTP_403_FORBIDDEN, 'msg': 'ID不能为空'})
+
         if club and club.creator.id == user.id:
-            apply = self.get_queryset().filter(id=applyId).first()
-            if apply:
-                club.members.add(apply.apply_user)
-                apply.delete()
-                return Response({'msg': '加入成功'}, status.HTTP_200_OK)
-            else:
-                raise exceptions.AuthenticationFailed(
-                    {'status': status.HTTP_403_FORBIDDEN, 'msg': '找不到记录'})
+            for id in applyId.split(','):
+                apply = self.get_queryset().filter(id=id).first()
+                if apply:
+                    if active == '1':
+                        club.members.add(apply.apply_user)
+                        apply.delete()
+                    if active == '2':
+                        apply.delete()
+            return Response({'msg': 'ok'}, status.HTTP_200_OK)
         else:
             raise exceptions.AuthenticationFailed(
                 {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
