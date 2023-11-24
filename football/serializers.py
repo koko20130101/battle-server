@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Users, Clubs, UsersClubs, Apply, UploadImages
+from .models import Users, Clubs, UsersClubs, Apply, Playgrounds, UploadImages
 
 
 class UsersSerializer(serializers.ModelSerializer):
@@ -11,6 +11,24 @@ class UsersSerializer(serializers.ModelSerializer):
         usefields = ['id', 'nick_name', 'common_name', 'avatar']
         data = super().to_representation(instance)
         resData = {}
+        for field_name in data:
+            if field_name in usefields:
+                resData[field_name] = data[field_name]
+        return resData
+
+
+class UsersDetailsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Users
+        fields = '__all__'
+
+    def to_representation(self, instance):
+        usefields = ['id', 'nick_name', 'common_name', 'avatar']
+        data = super().to_representation(instance)
+        resData = {}
+        resData['clubs'] = []
+        clubs = ClubsSerializer(instance.clubs, many=True).data
+        print(clubs)
         for field_name in data:
             if field_name in usefields:
                 resData[field_name] = data[field_name]
@@ -46,14 +64,14 @@ class ClubsDetailsSerializer(serializers.ModelSerializer):
         members = UsersSerializer(instance.members, many=True).data
         for i in members:
             # 从中间表中检索出对应记录，为了获取扩展字段 role的值
-            role = UserClubsSerializer(instance.users_clubs_set.get(
+            role = UsersClubsSerializer(instance.users_clubs_set.get(
                 club_id=instance.id, user_id=i['id'])).data['role']
             i['role'] = role
             data['members'].append(i)
         return data
 
 
-class UserClubsSerializer(serializers.ModelSerializer):
+class UsersClubsSerializer(serializers.ModelSerializer):
     class Meta:
         model = UsersClubs
         fields = '__all__'
@@ -62,8 +80,21 @@ class UserClubsSerializer(serializers.ModelSerializer):
 class ApplySerializer(serializers.ModelSerializer):
     nick_name = serializers.ReadOnlyField(source='apply_user.nick_name')
     avatar = serializers.ReadOnlyField(source='apply_user.avatar')
+
     class Meta:
         model = Apply
+        fields = '__all__'
+
+
+class PlaygroundsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Playgrounds
+        fields = '__all__'
+
+
+class GamesSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Playgrounds
         fields = '__all__'
 
 

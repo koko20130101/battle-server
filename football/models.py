@@ -39,6 +39,9 @@ class Clubs(models.Model):
     # 成员
     members = models.ManyToManyField(
         'football.Users', related_name='clubs_set', through='football.UsersClubs')
+    # 场地
+    playgrounds = models.ManyToManyField(
+        'football.Playgrounds', related_name='clubs_set', through='football.ClubsPlayground')
 
     class Meta:
         db_table = 'fb_clubs'
@@ -56,6 +59,19 @@ class UsersClubs(models.Model):
 
     class Meta:
         db_table = 'fb_users_clubs'
+
+
+class ClubsPlayground(models.Model):
+    '''俱乐部<==>场地，多对多中间表'''
+    playground = models.ForeignKey(
+        'football.Playgrounds', related_name='clubs_playground_set', on_delete=models.CASCADE)
+    club = models.ForeignKey(
+        'football.Clubs', related_name='clubs_playground_set', on_delete=models.CASCADE)
+    # 俱乐部场地的额外字段：优惠类型  0：无优惠  1：押金优惠 2：充值优惠
+    preferential = models.IntegerField(default=0)
+
+    class Meta:
+        db_table = 'fb_clubs_playground'
 
 
 class Account(models.Model):
@@ -79,16 +95,27 @@ class Games(models.Model):
     start_time = models.DateTimeField(null=True)
     # 场地
     site = models.CharField(max_length=50)
+    # 最小人数：几人制
+    mix_people = models.IntegerField(default=0)
+    # 最大报名人数
+    max_people = models.IntegerField(default=0)
+    # 是否公开约战
+    open_battle = models.BooleanField(default=False)
     # 实价
-    price = models.FloatField(blank=True)
+    price = models.FloatField(default=0, blank=True)
     # 原价
-    original_price = models.FloatField(blank=True)
-    # 费用
-    cost = models.FloatField(blank=True)
+    original_price = models.FloatField(default=0, blank=True)
+    # 其它费用
+    cost = models.FloatField(default=0, blank=True)
+    # 比赛状态  0：比赛中  1：未结算  2：比赛结束
+    status = models.IntegerField(default=0)
     # 简介
     brief = models.TextField(blank=True)
     # 分组
     group = models.IntegerField(default=1)
+    # 约战对象
+    battle = models.OneToOneField(
+        'football.Games', on_delete=models.DO_NOTHING)
     # 参赛人员
     members = models.ForeignKey(
         'football.GameMembers',  on_delete=models.CASCADE)
@@ -128,6 +155,25 @@ class Apply(models.Model):
 
     class Meta:
         db_table = 'fb_apply'
+        ordering = ('id',)
+
+
+class Playgrounds(models.Model):
+    '''球场'''
+    playground_name = models.CharField(max_length=30)
+    # 球场类型 1：足球  2：篮球  3：羽毛球  4：乒乓球
+    play_type = models.IntegerField(default=1)
+    # 省
+    province = models.CharField(max_length=20, null=True)
+    # 市
+    city = models.CharField(max_length=20, null=True)
+    # 区
+    region = models.CharField(max_length=20, null=True)
+    # 详细地址
+    address = models.TextField(null=True)
+
+    class Meta:
+        db_table = 'fb_playground'
         ordering = ('id',)
 
 
