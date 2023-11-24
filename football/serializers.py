@@ -1,14 +1,29 @@
 from rest_framework import serializers
-from .models import Users, Clubs, UsersClubs, Apply, Playgrounds, UploadImages
+from .models import Users, Clubs, UsersClubs, Apply, Playgrounds, Games,UploadImages
 
+class ClubsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Clubs
+        fields = '__all__'
+
+    def to_representation(self, instance):
+        usefields = ['id', 'club_name', 'club_logo',
+                     'sort', 'honor', 'brief']
+        data = super().to_representation(instance)
+        resData = {}
+        for field_name in data:
+            if field_name in usefields:
+                resData[field_name] = data[field_name]
+        return resData
 
 class UsersSerializer(serializers.ModelSerializer):
+    clubs = serializers.ReadOnlyField(source='clubs.id')
     class Meta:
         model = Users
         fields = '__all__'
 
     def to_representation(self, instance):
-        usefields = ['id', 'nick_name', 'common_name', 'avatar']
+        usefields = ['id', 'nick_name', 'common_name', 'avatar','clubs']
         data = super().to_representation(instance)
         resData = {}
         for field_name in data:
@@ -35,20 +50,7 @@ class UsersDetailsSerializer(serializers.ModelSerializer):
         return resData
 
 
-class ClubsSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Clubs
-        fields = '__all__'
 
-    def to_representation(self, instance):
-        usefields = ['id', 'club_name', 'club_logo',
-                     'sort', 'honor', 'brief']
-        data = super().to_representation(instance)
-        resData = {}
-        for field_name in data:
-            if field_name in usefields:
-                resData[field_name] = data[field_name]
-        return resData
 
 
 class ClubsDetailsSerializer(serializers.ModelSerializer):
@@ -94,7 +96,7 @@ class PlaygroundsSerializer(serializers.ModelSerializer):
 
 class GamesSerializer(serializers.ModelSerializer):
     class Meta:
-        model = Playgrounds
+        model = Games
         fields = '__all__'
 
 

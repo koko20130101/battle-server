@@ -94,7 +94,7 @@ class Games(models.Model):
     # 时间
     start_time = models.DateTimeField(null=True)
     # 场地
-    site = models.CharField(max_length=50)
+    site = models.CharField(max_length=50,null=True)
     # 最小人数：几人制
     mix_people = models.IntegerField(default=0)
     # 最大报名人数
@@ -115,10 +115,13 @@ class Games(models.Model):
     group = models.IntegerField(default=1)
     # 约战对象
     battle = models.OneToOneField(
-        'football.Games', on_delete=models.DO_NOTHING)
+        'football.Games', on_delete=models.DO_NOTHING,null=True)
+    # 对应球队
+    club = models.ForeignKey(
+        'football.Clubs', on_delete=models.DO_NOTHING)
     # 参赛人员
     members = models.ForeignKey(
-        'football.GameMembers',  on_delete=models.CASCADE)
+        'football.GameMembers',  on_delete=models.CASCADE,null=True)
 
     class Meta:
         db_table = 'fb_games'
@@ -126,7 +129,8 @@ class Games(models.Model):
 
 class GameMembers(models.Model):
     '''比赛报名人员'''
-    name = models.CharField(max_length=30)
+    # 备注
+    remarks = models.CharField(max_length=30)
     # 进球数
     goal = models.IntegerField(default=0)
     # 所属比赛
@@ -135,6 +139,7 @@ class GameMembers(models.Model):
     group = models.IntegerField(default=0)
     # 费用
     cost = models.FloatField(blank=True)
+    user = models.ForeignKey('football.Users',on_delete=models.DO_NOTHING)
 
     class Meta:
         db_table = 'fb_game_members'

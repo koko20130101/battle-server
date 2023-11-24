@@ -7,7 +7,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from football.serializers import ApplySerializer, PlaygroundsSerializer, GamesSerializer, UploadImagesSerializer
-from football.models import Clubs, Apply, Playgrounds, Games, UploadImages
+from football.models import Clubs, Apply,UsersClubs, Playgrounds, Games, UploadImages
 from football.permissions import IsOwner
 from config.settings import APP_ID, SECRET
 from PIL import Image
@@ -126,12 +126,30 @@ class GamesViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         user = request.user
-        clubs = user.clubs
-        print(clubs)
-        # queryset = self.filter_queryset(self.get_queryset()).filter(
-        #     family=request.user.belong_family)
-        # serializer = self.get_serializer(queryset, many=True)
-        # return Response(serializer.data)
+        # user_club = UsersClubs.objects.filter(user_id=user.id)
+        # if user_club:
+            
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+        else:
+            serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status.HTTP_200_OK)
+
+    def perform_create(self, serializer):
+        # 创建
+        user = self.request.user
+        clubId = self.request.data.get('club')
+
+        user_blub = UsersClubs.objects.filter(
+            user_id=user.id, club_id=clubId).first()
+        if user_blub:
+            club = Clubs.objects.filter(id=clubId).first()
+            print(club)
+            serializer.save()
+            print(88)
+            return Response({'msg': '创建成功'}, status.HTTP_200_OK)
 
 
 class ImageUploadViewSet(viewsets.ModelViewSet):
