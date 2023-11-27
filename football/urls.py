@@ -1,14 +1,14 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from football.views import views, users, clubs
+from football.views import views, users, clubs, games
 
 router = DefaultRouter(trailing_slash=False)
 router.register(r'users', users.UsersViewSet)
 router.register(r'clubs', clubs.ClubsViewSet)
 router.register(r'apply', views.ApplyViewSet)
 router.register(r'playground', views.PlaygroundsViewSet)
-router.register(r'games', views.GamesViewSet)
-# router.register(r'codes', views.CodesViewSet)
+router.register(r'games', games.GamesViewSet)
+router.register(r'game-members', views.GameMembersViewSet)
 # router.register(r'relatives', views.RelativesViewSet)
 # router.register(r'advert', views.AdvertViewSet)
 # router.register(r'arts', views.ArtsViewSet)

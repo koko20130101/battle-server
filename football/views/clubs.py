@@ -63,7 +63,7 @@ class ClubsViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         if instance.creator.id == user.id:
             # 只有创建者可以修改
-            serializer.save(data=self.request.data)
+            serializer.save()
         else:
             raise exceptions.AuthenticationFailed(
                 {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})

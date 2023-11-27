@@ -1,5 +1,6 @@
 from rest_framework import serializers
-from .models import Users, Clubs, UsersClubs, Apply, Playgrounds, Games,UploadImages
+from .models import Users, Clubs, UsersClubs, Apply, Playgrounds, Games, GameMembers, UploadImages
+
 
 class ClubsSerializer(serializers.ModelSerializer):
     class Meta:
@@ -16,14 +17,16 @@ class ClubsSerializer(serializers.ModelSerializer):
                 resData[field_name] = data[field_name]
         return resData
 
+
 class UsersSerializer(serializers.ModelSerializer):
     clubs = serializers.ReadOnlyField(source='clubs.id')
+
     class Meta:
         model = Users
         fields = '__all__'
 
     def to_representation(self, instance):
-        usefields = ['id', 'nick_name', 'common_name', 'avatar','clubs']
+        usefields = ['id', 'nick_name', 'common_name', 'avatar', 'clubs']
         data = super().to_representation(instance)
         resData = {}
         for field_name in data:
@@ -48,9 +51,6 @@ class UsersDetailsSerializer(serializers.ModelSerializer):
             if field_name in usefields:
                 resData[field_name] = data[field_name]
         return resData
-
-
-
 
 
 class ClubsDetailsSerializer(serializers.ModelSerializer):
@@ -94,10 +94,32 @@ class PlaygroundsSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class GameMembersSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = GameMembers
+        fields = '__all__'
+
+
 class GamesSerializer(serializers.ModelSerializer):
+
     class Meta:
         model = Games
         fields = '__all__'
+
+    def to_representation(self, instance):
+        path = self.context['request'].path
+        usefields = ['id', 'title', 'start_time',
+                     'site', 'max_people', 'status', 'brief', 'battle', 'club']
+        data = super().to_representation(instance)
+        resData = {}
+        if path == '/games':
+            # 列表输出给定字段
+            for field_name in data:
+                if field_name in usefields:
+                    resData[field_name] = data[field_name]
+        else:
+            resData = data
+        return resData
 
 
 class UploadImagesSerializer(serializers.ModelSerializer):
