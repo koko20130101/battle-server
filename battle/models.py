@@ -13,10 +13,10 @@ class Users(AbstractUser):
     avatar = models.URLField(blank=True)
     # 所属俱乐部
     clubs = models.ManyToManyField(
-        'football.Clubs', related_name='users_set', through='football.UsersClubs')
+        'battle.Clubs', related_name='users_set', through='battle.UsersClubs')
 
     class Meta:
-        db_table = 'fb_users'
+        db_table = 'bt_users'
 
 
 class Clubs(models.Model):
@@ -25,10 +25,10 @@ class Clubs(models.Model):
     club_logo = models.TextField(blank=True)
     # 创建者
     creator = models.ForeignKey(
-        'football.Users', related_name='clubs_set1', on_delete=models.DO_NOTHING, null=True)
+        'battle.Users', related_name='clubs_set1', on_delete=models.DO_NOTHING, null=True)
     # 队长
     captain = models.ForeignKey(
-        'football.Users', related_name='clubs_set2', on_delete=models.DO_NOTHING, null=True)
+        'battle.Users', related_name='clubs_set2', on_delete=models.DO_NOTHING, null=True)
     brief = models.TextField(blank=True)
     # 排序
     sort = models.IntegerField(default=0)
@@ -38,40 +38,40 @@ class Clubs(models.Model):
     need_apply = models.BooleanField(default=True)
     # 成员
     members = models.ManyToManyField(
-        'football.Users', related_name='clubs_set', through='football.UsersClubs')
+        'battle.Users', related_name='clubs_set', through='battle.UsersClubs')
     # 场地
     playgrounds = models.ManyToManyField(
-        'football.Playgrounds', related_name='clubs_set', through='football.ClubsPlayground')
+        'battle.Playgrounds', related_name='clubs_set', through='battle.ClubsPlayground')
 
     class Meta:
-        db_table = 'fb_clubs'
+        db_table = 'bt_clubs'
         ordering = ('id',)
 
 
 class UsersClubs(models.Model):
     '''用户<==>俱乐部，多对多中间表'''
     user = models.ForeignKey(
-        'football.Users', related_name='users_clubs_set', on_delete=models.CASCADE)
+        'battle.Users', related_name='users_clubs_set', on_delete=models.CASCADE)
     club = models.ForeignKey(
-        'football.Clubs', related_name='users_clubs_set', on_delete=models.CASCADE)
+        'battle.Clubs', related_name='users_clubs_set', on_delete=models.CASCADE)
     # 用户在俱乐部中的角色， 1：超级管理  2：管理员  3：会员
     role = models.IntegerField(default=3)
 
     class Meta:
-        db_table = 'fb_users_clubs'
+        db_table = 'bt_users_clubs'
 
 
 class ClubsPlayground(models.Model):
     '''俱乐部<==>场地，多对多中间表'''
     playground = models.ForeignKey(
-        'football.Playgrounds', related_name='clubs_playground_set', on_delete=models.CASCADE)
+        'battle.Playgrounds', related_name='clubs_playground_set', on_delete=models.CASCADE)
     club = models.ForeignKey(
-        'football.Clubs', related_name='clubs_playground_set', on_delete=models.CASCADE)
+        'battle.Clubs', related_name='clubs_playground_set', on_delete=models.CASCADE)
     # 俱乐部场地的额外字段：优惠类型  0：无优惠  1：押金优惠 2：充值优惠
     preferential = models.IntegerField(default=0)
 
     class Meta:
-        db_table = 'fb_clubs_playground'
+        db_table = 'bt_clubs_playground'
 
 
 class Account(models.Model):
@@ -79,12 +79,12 @@ class Account(models.Model):
     # 余额
     balance = models.FloatField(blank=True)
     # 对应用户
-    user = models.ForeignKey('football.Users', on_delete=models.CASCADE)
+    user = models.ForeignKey('battle.Users', on_delete=models.CASCADE)
     # 对应俱乐部
-    club = models.ForeignKey('football.Clubs', on_delete=models.CASCADE)
+    club = models.ForeignKey('battle.Clubs', on_delete=models.CASCADE)
 
     class Meta:
-        db_table = 'fb_account'
+        db_table = 'bt_account'
 
 
 class Games(models.Model):
@@ -115,15 +115,15 @@ class Games(models.Model):
     group = models.IntegerField(default=1)
     # 约战对象
     battle = models.OneToOneField(
-        'football.Games', on_delete=models.DO_NOTHING, null=True)
+        'battle.Games', on_delete=models.DO_NOTHING, null=True)
     # 对应球队
     club = models.ForeignKey(
-        'football.Clubs', on_delete=models.CASCADE, null=True)
+        'battle.Clubs', on_delete=models.CASCADE, null=True)
     # 留言
     remarks = models.CharField(max_length=50, null=True)
 
     class Meta:
-        db_table = 'fb_games'
+        db_table = 'bt_games'
         ordering = ('id',)
 
 
@@ -138,15 +138,15 @@ class GameMembers(models.Model):
     cost = models.FloatField(null=True)
     # 所属球队
     club = models.ForeignKey(
-        'football.Clubs', on_delete=models.CASCADE, null=True)
+        'battle.Clubs', on_delete=models.CASCADE, null=True)
     # 所属比赛
     game = models.ForeignKey(
-        'football.Games', on_delete=models.CASCADE, null=True)
+        'battle.Games', on_delete=models.CASCADE, null=True)
     user = models.ForeignKey(
-        'football.Users', on_delete=models.CASCADE, null=True)
+        'battle.Users', on_delete=models.CASCADE, null=True)
 
     class Meta:
-        db_table = 'fb_game_members'
+        db_table = 'bt_game_members'
 
 
 class Apply(models.Model):
@@ -157,13 +157,13 @@ class Apply(models.Model):
     remarks = models.TextField(max_length=50, null=True)
     # 申请人
     apply_user = models.ForeignKey(
-        'football.Users', on_delete=models.CASCADE, null=True)
+        'battle.Users', on_delete=models.CASCADE, null=True)
     # 申请要加入的俱乐部
     club = models.ForeignKey(
-        'football.Clubs', on_delete=models.CASCADE, null=True)
+        'battle.Clubs', on_delete=models.CASCADE, null=True)
 
     class Meta:
-        db_table = 'fb_apply'
+        db_table = 'bt_apply'
         ordering = ('id',)
 
 
@@ -182,17 +182,17 @@ class Playgrounds(models.Model):
     address = models.TextField(null=True)
 
     class Meta:
-        db_table = 'fb_playground'
+        db_table = 'bt_playground'
         ordering = ('id',)
 
 
 class UploadImages(models.Model):
     '''上传的图片'''
-    height = models.PositiveIntegerField(default=75)
-    width = models.PositiveIntegerField(default=75)
+    height = models.PositiveIntegerField(default=155)
+    width = models.PositiveIntegerField(default=155)
     image_type = models.IntegerField(default=1)
     image_url = models.ImageField(
         upload_to='upload', height_field='height', width_field='width')
 
     class Meta:
-        db_table = 'fb_upload_imges'
+        db_table = 'bt_upload_imges'

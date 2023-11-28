@@ -6,9 +6,9 @@ from rest_framework import viewsets, permissions, status, exceptions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
-from football.serializers import ApplySerializer, PlaygroundsSerializer, GameMembersSerializer, UploadImagesSerializer
-from football.models import Clubs, Apply, UsersClubs, Playgrounds, Games, GameMembers, UploadImages
-from football.permissions import IsOwner
+from battle.serializers import ApplySerializer, PlaygroundsSerializer, GameMembersSerializer, UploadImagesSerializer
+from battle.models import Clubs, Apply, UsersClubs, Playgrounds, Games, GameMembers, UploadImages
+from battle.permissions import IsOwner
 from config.settings import APP_ID, SECRET
 from PIL import Image
 from io import BytesIO

@@ -1,8 +1,8 @@
 from rest_framework import viewsets, permissions, status, exceptions
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from football.serializers import ClubsSerializer, ClubsDetailsSerializer
-from football.models import Clubs
+from battle.serializers import ClubsSerializer, ClubsDetailsSerializer
+from battle.models import Clubs
 
 
 class ClubsViewSet(viewsets.ModelViewSet):

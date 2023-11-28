@@ -2,8 +2,8 @@ from rest_framework import viewsets, permissions, status, exceptions
 from pymysql import NULL
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from football.serializers import GamesSerializer
-from football.models import Clubs, UsersClubs, Games
+from battle.serializers import GamesSerializer
+from battle.models import Clubs, UsersClubs, Games
 
 
 class GamesViewSet(viewsets.ModelViewSet):

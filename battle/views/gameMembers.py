@@ -1,7 +1,7 @@
 from rest_framework import viewsets, permissions, status, exceptions
 from rest_framework.response import Response
-from football.serializers import GameMembersSerializer
-from football.models import UsersClubs, Games, GameMembers
+from battle.serializers import GameMembersSerializer
+from battle.models import UsersClubs, Games, GameMembers
 from config.settings import APP_ID, SECRET
 
 

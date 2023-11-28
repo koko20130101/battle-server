@@ -2,8 +2,8 @@
 
 # production
 /config/__pycache__/*
-/football/__pycache__/*
-/football/migrations/__pycache__/*
+/battle/__pycache__/*
+/battle/migrations/__pycache__/*
 /venv/*
 !/venv/requirements.txt
 .vscode
