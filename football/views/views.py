@@ -119,45 +119,6 @@ class PlaygroundsViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status.HTTP_200_OK)
 
 
-class GameMembersViewSet(viewsets.ModelViewSet):
-    '''参赛人员视图集'''
-    queryset = GameMembers.objects.all()
-    serializer_class = GameMembersSerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def list(self, request, *args, **kwargs):
-        # 不能查看列表
-        raise exceptions.AuthenticationFailed(
-            {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
-
-    def perform_create(self, serializer):
-        # 申请比赛
-        user = self.request.user
-        gameId = self.request.data.get('gameId')
-        clubId = self.request.data.get('clubId')
-        if not gameId:
-            raise exceptions.AuthenticationFailed(
-                {'status': status.HTTP_403_FORBIDDEN, 'msg': '比赛ID不能为空'})
-        if not clubId:
-            raise exceptions.AuthenticationFailed(
-                {'status': status.HTTP_403_FORBIDDEN, 'msg': '球队ID不能为空'})
-
-        user_blub = UsersClubs.objects.filter(
-            user_id=user.id, club_id=clubId).first()
-        game = Games.objects.get(id=gameId)
-        print(game.club.id)
-        print(user_blub.club_id)
-        print(game.club.id == user_blub.club_id)
-        serializer.save()
-        if user_blub and game.club.id == user_blub.club_id:
-            serializer.save(game=game)
-            serializer.save(user=user)
-            return Response({'msg': '创建成功'}, status.HTTP_200_OK)
-        else:
-            raise exceptions.AuthenticationFailed(
-                {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
-
-
 class ImageUploadViewSet(viewsets.ModelViewSet):
     '''上传图片视图集'''
     queryset = UploadImages.objects.all()

@@ -119,9 +119,8 @@ class Games(models.Model):
     # 对应球队
     club = models.ForeignKey(
         'football.Clubs', on_delete=models.CASCADE, null=True)
-    # 参赛人员
-    members = models.ForeignKey(
-        'football.GameMembers',  on_delete=models.CASCADE, null=True)
+    # 留言
+    remarks = models.CharField(max_length=50, null=True)
 
     class Meta:
         db_table = 'fb_games'
@@ -134,12 +133,15 @@ class GameMembers(models.Model):
     remarks = models.CharField(max_length=30, null=True)
     # 进球数
     goal = models.IntegerField(default=0)
-    # 所属比赛
-    game = models.ForeignKey(
-        'football.Games', on_delete=models.CASCADE, null=True)
     group = models.IntegerField(default=0)
     # 费用
     cost = models.FloatField(null=True)
+    # 所属球队
+    club = models.ForeignKey(
+        'football.Clubs', on_delete=models.CASCADE, null=True)
+    # 所属比赛
+    game = models.ForeignKey(
+        'football.Games', on_delete=models.CASCADE, null=True)
     user = models.ForeignKey(
         'football.Users', on_delete=models.CASCADE, null=True)
 

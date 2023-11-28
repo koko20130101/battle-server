@@ -1,4 +1,5 @@
 from rest_framework import viewsets, permissions, status, exceptions
+from pymysql import NULL
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from football.serializers import GamesSerializer
@@ -41,7 +42,7 @@ class GamesViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         # 创建
         user = self.request.user
-        clubId = self.request.data.get('club')
+        clubId = self.request.data.get('clubId')
         if not clubId:
             raise exceptions.AuthenticationFailed(
                 {'status': status.HTTP_403_FORBIDDEN, 'msg': '球队ID不能为空'})
@@ -71,12 +72,53 @@ class GamesViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         # 编辑
         user = self.request.user
-        clubId = self.request.data.get('club')
+        instance = self.get_object()
         user_blub = UsersClubs.objects.filter(
-            user_id=user.id, club_id=clubId).first()
+            user_id=user.id, club_id=instance.club).first()
 
         if user_blub and user_blub.role in [1, 2]:
             serializer.save()
+        else:
+            raise exceptions.AuthenticationFailed(
+                {'status': status.HTTP_403_FORBIDDEN, 'msg': '您无权操作'})
+
+    @action(methods=['POST'], detail=False, permission_classes=[])
+    def openGames(self, request, *args, **kwargs):
+        # 公开的比赛
+        queryset = self.filter_queryset(
+            self.get_queryset()).filter(open_battle=True)
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+        else:
+            serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status.HTTP_200_OK)
+
+    @action(methods=['POST'], detail=False, permission_classes=[permissions.IsAuthenticated])
+    def battle(self, request, *args, **kwargs):
+        # 应战
+        user = self.request.user
+        gameId = self.request.data.get('gameId')
+        battleId = self.request.data.get('battleId')
+        active = self.request.data.get('active')
+
+        game_instance = self.get_queryset().get(id=gameId)
+        battle_instance = self.get_queryset().get(id=battleId)
+        user_blub = UsersClubs.objects.filter(
+            user_id=user.id, club_id=game_instance.club).first()
+        if game_instance.club == battle_instance.club:
+            return Response({'msg': '同一支球队不能应战'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+        if battle_instance.battle and active == '1':
+            return Response({'msg': '已经被其它球队应战，请选其它比赛'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+        if user_blub and user_blub.role in [1, 2]:
+            # 只有管理员才能应战
+            game_instance.battle = battle_instance if active == '1' else None
+            game_instance.save()
+            battle_instance.battle = game_instance if active == '1' else None
+            battle_instance.save()
+            return Response({'msg': 'ok'}, status.HTTP_200_OK)
         else:
             raise exceptions.AuthenticationFailed(
                 {'status': status.HTTP_403_FORBIDDEN, 'msg': '您无权操作'})
