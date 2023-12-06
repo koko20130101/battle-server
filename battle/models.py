@@ -22,6 +22,7 @@ class Users(AbstractUser):
 class Clubs(models.Model):
     '''俱乐部'''
     club_name = models.CharField(max_length=50)
+    short_name = models.CharField(max_length=8)
     club_logo = models.TextField(blank=True)
     # 创建者
     creator = models.ForeignKey(
@@ -91,8 +92,12 @@ class Games(models.Model):
     '''足球比赛'''
     # 标题
     title = models.CharField(max_length=50)
-    # 时间
-    start_time = models.DateTimeField(null=True)
+    # 比赛日期
+    game_date = models.TimeField(null=True)
+    # 开始时间
+    start_time = models.TimeField(null=True)
+    # 结束时间
+    end_time = models.TimeField(null=True)
     # 场地
     site = models.CharField(max_length=50, null=True)
     # 最小人数：几人制
