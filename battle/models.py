@@ -1,5 +1,18 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+import datetime
+import random
+import os
+
+
+# 使用闭包设置保存路径
+def update_file(path):
+    def wrapper(instance, filename):
+        ext = filename.split('.')[-1]  # 获取后缀名
+        filename = "%s_%d.%s" % ((datetime.datetime.now().strftime(
+            '%Y%m%d%H%M%S')), random.randrange(100, 999), ext)
+        return os.path.join(path, filename)
+    return wrapper
 
 
 class Users(AbstractUser):
@@ -22,7 +35,7 @@ class Users(AbstractUser):
 class Clubs(models.Model):
     '''俱乐部'''
     club_name = models.CharField(max_length=50)
-    short_name = models.CharField(max_length=8)
+    short_name = models.CharField(max_length=8, null=True)
     club_logo = models.TextField(blank=True)
     # 创建者
     creator = models.ForeignKey(
@@ -197,7 +210,7 @@ class UploadImages(models.Model):
     width = models.PositiveIntegerField(default=155)
     image_type = models.IntegerField(default=1)
     image_url = models.ImageField(
-        upload_to='upload', height_field='height', width_field='width')
+        upload_to=update_file('battle'), height_field='height', width_field='width', verbose_name="封面图")
 
     class Meta:
         db_table = 'bt_upload_imges'
