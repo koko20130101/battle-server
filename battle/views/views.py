@@ -5,7 +5,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from battle.serializers import ApplySerializer, PlaygroundsSerializer, GameMembersSerializer, UploadImagesSerializer
-from battle.models import Clubs, Apply, UsersClubs, Playgrounds, Games, GameMembers, UploadImages
+from battle.models import Clubs, Games, Users, Apply, Playgrounds,  UploadImages
 from battle.permissions import IsOwner
 from config.settings import APP_ID, SECRET
 from PIL import Image
@@ -124,11 +124,11 @@ class ImageUploadViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def create(self, request, *args, **kwargs):
-        print(request.user)
-        print(request.data)
-        serializer = self.get_serializer(data=request.data)
+
+        serializer = self.get_serializer(
+            data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        serializer.save(user=request.user)
+
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_200_OK, headers=headers)
-    

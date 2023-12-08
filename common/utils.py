@@ -3,12 +3,11 @@ import json
 import urllib.request
 import urllib.parse
 from Cryptodome.Cipher import AES
-from config.settings import APP_ID, SECRET
 from django.core.cache import cache
-from rest_framework import status
-from rest_framework.request import Request
 from rest_framework.response import Response
-from rest_framework.pagination import PageNumberPagination, CursorPagination, LimitOffsetPagination
+from rest_framework.pagination import PageNumberPagination
+import datetime
+import random
 
 # 解密微信手机号等信息
 
@@ -112,3 +111,11 @@ def getUnlimited(access_token, params):
     content = res.read()
     # 缓存起来,7200秒（两小时）有效
     return content
+
+
+# 修改上传文件名称及存储路径
+def get_upload_to(instance, filename):
+    ext = filename.split('.')[-1]  # 获取后缀名
+    filename = "%s_%d.%s" % ((datetime.datetime.now().strftime(
+        '%Y%m%d%H%M%S')), random.randrange(100, 999), ext)
+    return 'battle/upload/{0}_{1}'.format(instance.user.id, filename)

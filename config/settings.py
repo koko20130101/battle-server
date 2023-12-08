@@ -151,7 +151,7 @@ SECRET = 'c94a87c176164dc191c5109b6ed2b928'
 MEDIA_ROOT = '/root/assets/'
 
 # 资源访问路径
-MEDIA_URL = 'https://www.scbbsc.com/assets/'
+MEDIA_URL = 'https://www.scbbsc.com/resource/'
 
 # 使用扩展用户表
 AUTH_USER_MODEL = 'battle.Users'

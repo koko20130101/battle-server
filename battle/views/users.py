@@ -24,6 +24,11 @@ class UsersViewSet(viewsets.ModelViewSet):
         raise exceptions.AuthenticationFailed(
             {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
 
+    def update(self, request, *args, **kwargs):
+        # 不能put更新
+        raise exceptions.AuthenticationFailed(
+            {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
+
     def retrieve(self, request, *args, **kwargs):
         # 不能get查看用户信息
         raise exceptions.AuthenticationFailed(
@@ -99,6 +104,21 @@ class UsersViewSet(viewsets.ModelViewSet):
         if instance:
             serializer = self.get_serializer(instance)
             return Response(serializer.data)
+        else:
+            return Response({
+                'msg': '您还未注册',
+            }, status=status.HTTP_416_REQUESTED_RANGE_NOT_SATISFIABLE)
+
+    # 设置信息
+    @action(methods=['POST'], detail=False, permission_classes=[permissions.IsAuthenticated, IsOwner])
+    def setUserInfo(self, request, *args, **kwargs):
+        instance = self.filter_queryset(
+            self.get_queryset()).filter(id=request.user.id).first()
+        if instance:
+            instance.nick_name = request.data.get('nick_name')
+            instance.avatar = request.data.get('avatar')
+            instance.save()
+            return Response({'msg': '修改成功'}, status.HTTP_200_OK)
         else:
             return Response({
                 'msg': '您还未注册',

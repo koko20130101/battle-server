@@ -1,19 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-import datetime
-import random
-import os
-
-
-# 使用闭包设置保存路径
-def update_file(path):
-    def wrapper(instance, filename):
-        ext = filename.split('.')[-1]  # 获取后缀名
-        filename = "%s_%d.%s" % ((datetime.datetime.now().strftime(
-            '%Y%m%d%H%M%S')), random.randrange(100, 999), ext)
-        return os.path.join(path, filename)
-    return wrapper
-
+from common.utils import get_upload_to
 
 class Users(AbstractUser):
     '''用户'''
@@ -21,8 +8,6 @@ class Users(AbstractUser):
     created = models.DateTimeField(auto_now_add=True)
     real_name = models.CharField(max_length=15, blank=True)
     nick_name = models.CharField(max_length=50, blank=True)
-    # 常用名
-    common_name = models.CharField(max_length=50, blank=True)
     avatar = models.URLField(blank=True)
     # 所属俱乐部
     clubs = models.ManyToManyField(
@@ -208,9 +193,12 @@ class UploadImages(models.Model):
     '''上传的图片'''
     height = models.PositiveIntegerField(default=155)
     width = models.PositiveIntegerField(default=155)
-    image_type = models.IntegerField(default=1)
+    # 图片所属用户
+    user = models.ForeignKey(
+        'battle.Users', on_delete=models.CASCADE, null=True)
+    image_type = models.IntegerField(default=0)
     image_url = models.ImageField(
-        upload_to=update_file('battle'), height_field='height', width_field='width', verbose_name="封面图")
+        upload_to=get_upload_to, height_field='height', width_field='width')
 
     class Meta:
         db_table = 'bt_upload_imges'
