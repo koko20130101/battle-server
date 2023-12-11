@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from common.utils import get_upload_to
 
+
 class Users(AbstractUser):
     '''用户'''
     open_id = models.CharField(max_length=100, blank=False)
@@ -9,9 +10,6 @@ class Users(AbstractUser):
     real_name = models.CharField(max_length=15, blank=True)
     nick_name = models.CharField(max_length=50, blank=True)
     avatar = models.URLField(blank=True)
-    # 所属俱乐部
-    clubs = models.ManyToManyField(
-        'battle.Clubs', related_name='users_set', through='battle.UsersClubs')
 
     class Meta:
         db_table = 'bt_users'
@@ -22,6 +20,8 @@ class Clubs(models.Model):
     club_name = models.CharField(max_length=50)
     short_name = models.CharField(max_length=8, null=True)
     club_logo = models.TextField(blank=True)
+    area = models.CharField(max_length=50, null=True)
+    area_code = models.CharField(max_length=50, null=True)
     # 创建者
     creator = models.ForeignKey(
         'battle.Users', related_name='clubs_set1', on_delete=models.DO_NOTHING, null=True)

@@ -5,6 +5,7 @@ from battle.views import views, users, clubs, games, gameMembers
 router = DefaultRouter(trailing_slash=False)
 router.register(r'users', users.UsersViewSet)
 router.register(r'clubs', clubs.ClubsViewSet)
+router.register(r'members', views.MembersViewSet)
 router.register(r'apply', views.ApplyViewSet)
 router.register(r'playground', views.PlaygroundsViewSet)
 router.register(r'games', games.GamesViewSet)

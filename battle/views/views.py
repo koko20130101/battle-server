@@ -4,12 +4,55 @@ from rest_framework import viewsets, permissions, status, exceptions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
-from battle.serializers import ApplySerializer, PlaygroundsSerializer, GameMembersSerializer, UploadImagesSerializer
-from battle.models import Clubs, Games, Users, Apply, Playgrounds,  UploadImages
+from battle.serializers import ApplySerializer, PlaygroundsSerializer, UsersClubsSerializer, UploadImagesSerializer
+from battle.models import Clubs, UsersClubs, Apply, Playgrounds,  UploadImages
 from battle.permissions import IsOwner
 from config.settings import APP_ID, SECRET
 from PIL import Image
 from io import BytesIO
+
+
+class MembersViewSet(viewsets.ModelViewSet):
+    '''球队成员视图集'''
+    queryset = UsersClubs.objects.all()
+    serializer_class = UsersClubsSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    # 指定可以过滤字段
+    # filterset_fields = ['playground_name']
+    # 对特定字段进行排序,指定排序的字段
+    ordering_fields = ['id']
+
+    def list(self, request, *args, **kwargs):
+        user = request.user
+        clubId = request.GET.get('clubId')
+        # 是否是球队成员
+        members = self.filter_queryset(
+            self.get_queryset()).filter(user=user, club=clubId)
+
+        if members.first():
+            queryset = self.filter_queryset(
+                self.get_queryset()).filter(club=clubId)
+            page = self.paginate_queryset(queryset)
+        else:
+            page = self.paginate_queryset(members)
+
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+        else:
+            serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status.HTTP_200_OK)
+
+    def create(self, request, *args, **kwargs):
+        raise exceptions.AuthenticationFailed(
+            {'status': status.HTTP_403_FORBIDDEN, 'msg': '您无权操作'})
+
+    def update(self, request, *args, **kwargs):
+        raise exceptions.AuthenticationFailed(
+            {'status': status.HTTP_403_FORBIDDEN, 'msg': '您无权操作'})
+
+    def retrieve(self, request, *args, **kwargs):
+        raise exceptions.AuthenticationFailed(
+            {'status': status.HTTP_403_FORBIDDEN, 'msg': '您无权查看'})
 
 
 class ApplyViewSet(viewsets.ModelViewSet):

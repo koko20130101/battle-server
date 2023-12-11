@@ -3,80 +3,76 @@ from .models import Users, Clubs, UsersClubs, Apply, Playgrounds, Games, GameMem
 
 
 class ClubsSerializer(serializers.ModelSerializer):
+    creator = serializers.ReadOnlyField(source='creator.nick_name')
     class Meta:
         model = Clubs
         fields = '__all__'
 
     def to_representation(self, instance):
         usefields = ['id', 'club_name', 'club_logo',
-                     'sort', 'honor', 'brief']
+                     'sort', 'honor', 'brief','creator']
         data = super().to_representation(instance)
         resData = {}
+        members = UsersSerializer(instance.members, many=True).data
+        resData['memberTotal'] = len(members)
+        
         for field_name in data:
             if field_name in usefields:
                 resData[field_name] = data[field_name]
         return resData
+    
+# class ClubsDetailsSerializer(serializers.ModelSerializer):
+#     creator = serializers.ReadOnlyField(source='creator.nick_name')
+#     class Meta:
+#         model = Clubs
+#         fields = '__all__'
+
+#     def to_representation(self, instance):
+#         # instance为一个Club的实例
+#         data = super().to_representation(instance)
+#         data['members'] = []
+#         # club实例的外键 instance.members ，检索出该队伍的人员
+#         members = UsersSerializer(instance.members, many=True).data
+#         for i in members:
+#             # 从中间表中检索出对应记录，为了获取扩展字段 role的值
+#             role = UsersClubsSerializer(instance.users_clubs_set.get(
+#                 club_id=instance.id, user_id=i['id'])).data['role']
+#             i['role'] = role
+#             data['members'].append(i)
+#         return data
 
 
 class UsersSerializer(serializers.ModelSerializer):
-    clubs = serializers.ReadOnlyField(source='clubs.id')
-
     class Meta:
         model = Users
         fields = '__all__'
 
     def to_representation(self, instance):
-        usefields = ['id', 'nick_name', 'common_name', 'avatar', 'clubs']
+        usefields = ['id', 'nick_name', 'avatar']
         data = super().to_representation(instance)
         resData = {}
         for field_name in data:
             if field_name in usefields:
                 resData[field_name] = data[field_name]
         return resData
-
-
-class UsersDetailsSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Users
-        fields = '__all__'
-
-    def to_representation(self, instance):
-        usefields = ['id', 'nick_name', 'common_name', 'avatar']
-        data = super().to_representation(instance)
-        resData = {}
-        resData['clubs'] = []
-        clubs = ClubsSerializer(instance.clubs, many=True).data
-        print(clubs)
-        for field_name in data:
-            if field_name in usefields:
-                resData[field_name] = data[field_name]
-        return resData
-
-
-class ClubsDetailsSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Clubs
-        fields = '__all__'
-
-    def to_representation(self, instance):
-        # instance为一个Club的实例
-        data = super().to_representation(instance)
-        data['members'] = []
-        # club实例的外键 instance.members ，检索出该队伍的人员
-        members = UsersSerializer(instance.members, many=True).data
-        for i in members:
-            # 从中间表中检索出对应记录，为了获取扩展字段 role的值
-            role = UsersClubsSerializer(instance.users_clubs_set.get(
-                club_id=instance.id, user_id=i['id'])).data['role']
-            i['role'] = role
-            data['members'].append(i)
-        return data
 
 
 class UsersClubsSerializer(serializers.ModelSerializer):
+    nickName = serializers.ReadOnlyField(source='user.nick_name')
+    avatar = serializers.ReadOnlyField(source='user.avatar')
+
     class Meta:
         model = UsersClubs
         fields = '__all__'
+
+    def to_representation(self, instance):
+        usefields = ['id', 'role', 'nickName', 'avatar']
+        data = super().to_representation(instance)
+        resData = {}
+        for field_name in data:
+            if field_name in usefields:
+                resData[field_name] = data[field_name]
+        return resData
 
 
 class ApplySerializer(serializers.ModelSerializer):
