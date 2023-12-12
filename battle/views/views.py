@@ -1,15 +1,8 @@
-from django.db.models import Q
-from django.core.cache import cache
 from rest_framework import viewsets, permissions, status, exceptions
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from rest_framework.authtoken.models import Token
 from battle.serializers import ApplySerializer, PlaygroundsSerializer, UsersClubsSerializer, UploadImagesSerializer
 from battle.models import Clubs, UsersClubs, Apply, Playgrounds,  UploadImages
-from battle.permissions import IsOwner
-from config.settings import APP_ID, SECRET
-from PIL import Image
-from io import BytesIO
 
 
 class MembersViewSet(viewsets.ModelViewSet):
@@ -25,6 +18,7 @@ class MembersViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         user = request.user
         clubId = request.GET.get('clubId')
+        print(clubId)
         # 是否是球队成员
         members = self.filter_queryset(
             self.get_queryset()).filter(user=user, club=clubId)
@@ -62,7 +56,7 @@ class ApplyViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         # 申请列表
-        clubId = request.data.get('club')
+        clubId = request.GET.get('clubId')
         user = request.user
         club = Clubs.objects.filter(creator=user.id, id=clubId).first()
         if club:
@@ -79,17 +73,18 @@ class ApplyViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         # 申请
-        clubId = request.data.get('club')
+        clubId = request.data.get('clubId')
         user = request.user
 
         if clubId:
             club = Clubs.objects.get(id=clubId)
             if club.need_apply:
+                
                 # 需要审核
                 apply = self.get_queryset().filter(
                     club=club.id, apply_user=user.id).first()
                 if apply:
-                    return Response({'msg': '您已提交申请，请耐心等待管理员审核'}, status.HTTP_503_SERVICE_UNAVAILABLE)
+                    return Response({'msg': '您已提交过申请，请务重复申请'}, status.HTTP_503_SERVICE_UNAVAILABLE)
                 else:
                     applyData = {
                         'club': club.id,
@@ -106,8 +101,7 @@ class ApplyViewSet(viewsets.ModelViewSet):
                 return Response({'msg': '加入成功'}, status.HTTP_200_OK)
 
         else:
-            raise exceptions.AuthenticationFailed(
-                {'status': status.HTTP_403_FORBIDDEN, 'msg': '请选择要加入的球队'})
+            return Response({'msg': '请选择要加入的球队'}, status.HTTP_403_FORBIDDEN)
 
     def perform_destroy(self, instance):
         raise exceptions.AuthenticationFailed(
@@ -115,10 +109,10 @@ class ApplyViewSet(viewsets.ModelViewSet):
 
     @action(methods=['POST'], detail=False, permission_classes=[permissions.IsAuthenticated])
     def agree(self, request, *args, **kwargs):
-        # 是否通过审核
+        # 同意
         user = request.user
         applyId = request.data.get('applyId')
-        clubId = request.data.get('club')
+        clubId = request.data.get('clubId')
         # active 为1：通过，2：拒绝
         active = request.data.get('active')
         club = Clubs.objects.get(id=clubId)
@@ -130,10 +124,11 @@ class ApplyViewSet(viewsets.ModelViewSet):
             for id in applyId.split(','):
                 apply = self.get_queryset().filter(id=id).first()
                 if apply:
-                    if active == '1':
+                    print(active)
+                    if active == 1:
                         club.members.add(apply.apply_user)
                         apply.delete()
-                    if active == '2':
+                    if active == 2:
                         apply.delete()
             return Response({'msg': 'ok'}, status.HTTP_200_OK)
         else:

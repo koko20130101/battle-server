@@ -2,7 +2,7 @@ from rest_framework import viewsets, permissions, status, exceptions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from battle.serializers import ClubsSerializer
-from battle.models import Clubs, UsersClubs
+from battle.models import Clubs, UsersClubs, Apply
 
 
 class ClubsViewSet(viewsets.ModelViewSet):
@@ -69,14 +69,19 @@ class ClubsViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(queryset, many=True)
         result = []
         for i in serializer.data:
+
             # 获取用户的角色
-            i['role'] = user_blub.get(club_id=i['id']).role
+            i['role'] = user_blub.filter(club_id=i['id']).first().role
+            if i['role'] == 1:
+                apply = Apply.objects.all().filter(
+                    club_id=i['id'])
+                i['applyTotal'] = len(apply)
             result.append(i)
         return Response(serializer.data, status.HTTP_200_OK)
 
     @action(methods=['POST'], detail=False, permission_classes=[permissions.IsAuthenticated])
     def join(self, request, *args, **kwargs):
-        # 直接加入
+        # 申请加入
         clubId = request.data.get('id')
         user = request.user
         instance = self.get_queryset().get(id=clubId)
@@ -96,8 +101,8 @@ class ClubsViewSet(viewsets.ModelViewSet):
     @action(methods=['POST'], detail=False, permission_classes=[permissions.IsAuthenticated])
     def remove(self, request, *args, **kwargs):
         # 移出
-        clubId = request.data.get('club')
-        userId = request.data.get('member')
+        clubId = request.data.get('clubId')
+        userId = request.data.get('memberId')
         user = request.user
 
         if not clubId:
@@ -110,10 +115,9 @@ class ClubsViewSet(viewsets.ModelViewSet):
             user_id=user.id, club_id=clubId).first()
         # print(user.id)
         print(user_blub)
-        print(str(user.id) == userId)
-        if (str(user.id) == userId or (user_blub and user_blub.get('role') in [1, 2])) and str(instance.creator.id) != userId:
+        print(str(user.id) == str(userId))
+        if (str(user.id) == str(userId) or (user_blub and user_blub.get('role') in [1, 2])) and str(instance.creator.id) != userId:
             instance.members.remove(userId)
-            return Response({'msg': '移出成功'}, status.HTTP_200_OK)
+            return Response({'msg': '操作成功'}, status.HTTP_200_OK)
         else:
-            raise exceptions.AuthenticationFailed(
-                {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
+            return Response({'msg': '非法操作'}, status.HTTP_403_FORBIDDEN)
