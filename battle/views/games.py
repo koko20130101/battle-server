@@ -4,6 +4,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from battle.serializers import GamesSerializer
 from battle.models import Clubs, UsersClubs, Games
+from datetime import datetime
 
 
 class GamesViewSet(viewsets.ModelViewSet):
@@ -43,6 +44,7 @@ class GamesViewSet(viewsets.ModelViewSet):
         # 创建
         user = self.request.user
         clubId = self.request.data.get('clubId')
+
         if not clubId:
             raise exceptions.AuthenticationFailed(
                 {'status': status.HTTP_403_FORBIDDEN, 'msg': '球队ID不能为空'})

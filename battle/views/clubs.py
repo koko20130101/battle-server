@@ -32,9 +32,25 @@ class ClubsViewSet(viewsets.ModelViewSet):
             return Response({'msg': '创建成功'}, status.HTTP_200_OK)
 
     def retrieve(self, request, *args, **kwargs):
+        # 详情
         instance = self.get_object()
         serializer = self.get_serializer(instance)
-        return Response(serializer.data)
+        user = request.user
+        result = {}
+        if user:
+            # 从中间表中查对应的数据
+            user_blub = UsersClubs.objects.all().filter(club_id=instance.id,
+                                                        user_id=user.id).first()
+            if user_blub:
+                if user_blub.role in [1, 2]:
+                    # 超级管理员和管理员显示申请人数
+                    apply = Apply.objects.all().filter(
+                        club_id=instance.id)
+                    # 申请人数
+                    result['applyTotal'] = len(apply)
+                # 角色
+                result['role'] = user_blub.role
+        return Response({**result, **serializer.data})
 
     def perform_destroy(self, instance):
         # 删除
@@ -72,7 +88,7 @@ class ClubsViewSet(viewsets.ModelViewSet):
 
             # 获取用户的角色
             i['role'] = user_blub.filter(club_id=i['id']).first().role
-            if i['role'] == 1:
+            if i['role'] in [1, 2]:
                 apply = Apply.objects.all().filter(
                     club_id=i['id'])
                 i['applyTotal'] = len(apply)
@@ -102,22 +118,56 @@ class ClubsViewSet(viewsets.ModelViewSet):
     def remove(self, request, *args, **kwargs):
         # 移出
         clubId = request.data.get('clubId')
-        userId = request.data.get('memberId')
+        memberId = request.data.get('memberId')
         user = request.user
 
         if not clubId:
             return Response({'msg': '球队ID不能为空'}, status.HTTP_503_SERVICE_UNAVAILABLE)
-        if not userId:
-            return Response({'msg': '用户ID不能为空'}, status.HTTP_503_SERVICE_UNAVAILABLE)
+
+        instance = self.get_queryset().get(id=clubId)
+
+        if not memberId and instance.creator.id != user.id:
+            # 没有传memberId,且该用户不是队长，则自己退出
+            instance.members.remove(user.id)
+            return Response({'msg': '操作成功'}, status.HTTP_200_OK)
+
+        user_blub = instance.users_clubs_set.all(
+        ).filter(user_id=user.id, club_id=clubId).first()
+        if memberId and user_blub.role in [1, 2]:
+            # 查询出要称除的成员
+            memberQueryset = instance.users_clubs_set.all(
+            ).filter(id=memberId, club_id=clubId).first()
+
+            if memberQueryset.role == 1 or instance.creator.id == user.id:
+                return Response({'msg': '非法操作'}, status.HTTP_403_FORBIDDEN)
+            else:
+                instance.members.remove(memberQueryset.user_id)
+                return Response({'msg': '操作成功'}, status.HTTP_200_OK)
+
+        return Response({'msg': '非法操作'}, status.HTTP_403_FORBIDDEN)
+
+    @action(methods=['POST'], detail=False, permission_classes=[permissions.IsAuthenticated])
+    def setClubAdmin(self, request, *args, **kwargs):
+        # 设置或取消管理员
+        clubId = request.data.get('clubId')
+        memberId = request.data.get('memberId')
+        user = request.user
+
+        if not clubId:
+            return Response({'msg': '球队ID不能为空'}, status.HTTP_503_SERVICE_UNAVAILABLE)
+        if not memberId:
+            return Response({'msg': '队员ID不能为空'}, status.HTTP_503_SERVICE_UNAVAILABLE)
 
         instance = self.get_queryset().get(id=clubId)
         user_blub = instance.users_clubs_set.all().values().filter(
             user_id=user.id, club_id=clubId).first()
         # print(user.id)
-        print(user_blub)
-        print(str(user.id) == str(userId))
-        if (str(user.id) == str(userId) or (user_blub and user_blub.get('role') in [1, 2])) and str(instance.creator.id) != userId:
-            instance.members.remove(userId)
+
+        if user_blub and user_blub.get('role') == 1 and str(instance.creator.id) != user.id:
+            user_blub = instance.users_clubs_set.all().filter(
+                id=memberId, club_id=clubId).first()
+            user_blub.role = 2 if user_blub.role == 3 else 3
+            user_blub.save()
             return Response({'msg': '操作成功'}, status.HTTP_200_OK)
         else:
             return Response({'msg': '非法操作'}, status.HTTP_403_FORBIDDEN)

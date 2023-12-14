@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Users, Clubs, UsersClubs, Apply, Playgrounds, Games, GameMembers, UploadImages
+import time
 
 
 class ClubsSerializer(serializers.ModelSerializer):
@@ -94,9 +95,17 @@ class GamesSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         path = self.context['request'].path
-        usefields = ['id', 'title', 'start_time',
+        usefields = ['id', 'title', 'game_date', 'start_time', 'end_time',
                      'site', 'max_people', 'status', 'brief', 'battle', 'club']
         data = super().to_representation(instance)
+        if data['start_time'] and data['end_time']:
+            t1 = time.strptime(
+                data['start_time'], '%Y-%m-%dT%H:%M:%S+08:00')
+            t2 = time.strptime(
+                data['end_time'], '%Y-%m-%dT%H:%M:%S+08:00')
+            data['game_date'] = time.strftime('%Y-%m-%d', t1)
+            data['start_time'] = time.strftime('%H:%M', t1)
+            data['end_time'] = time.strftime('%H:%M', t2)
         resData = {}
         if path == '/games':
             # 列表输出给定字段

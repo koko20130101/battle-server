@@ -18,7 +18,6 @@ class MembersViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         user = request.user
         clubId = request.GET.get('clubId')
-        print(clubId)
         # 是否是球队成员
         members = self.filter_queryset(
             self.get_queryset()).filter(user=user, club=clubId)
@@ -124,7 +123,6 @@ class ApplyViewSet(viewsets.ModelViewSet):
             for id in applyId.split(','):
                 apply = self.get_queryset().filter(id=id).first()
                 if apply:
-                    print(active)
                     if active == 1:
                         club.members.add(apply.apply_user)
                         apply.delete()
