@@ -82,13 +82,25 @@ class PlaygroundsSerializer(serializers.ModelSerializer):
 
 
 class GameMembersSerializer(serializers.ModelSerializer):
+    nickName = serializers.ReadOnlyField(source='user.nick_name')
+    avatar = serializers.ReadOnlyField(source='user.avatar')
     class Meta:
         model = GameMembers
         fields = '__all__'
 
+    def to_representation(self, instance):
+        usefields = ['id','user', 'nickName', 'avatar', 'remarks','cost']
+        data = super().to_representation(instance)
+        resData = {}
+        for field_name in data:
+            if field_name in usefields:
+                resData[field_name] = data[field_name]
+        return resData
+
 
 class GamesSerializer(serializers.ModelSerializer):
-
+    clubName = serializers.ReadOnlyField(source='club.club_name')
+    clubLogo = serializers.ReadOnlyField(source='club.club_logo')
     class Meta:
         model = Games
         fields = '__all__'
@@ -96,7 +108,7 @@ class GamesSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         path = self.context['request'].path
         usefields = ['id', 'title', 'game_date', 'start_time', 'end_time',
-                     'site', 'max_people', 'status', 'brief', 'battle', 'club']
+                     'site', 'max_people', 'status', 'brief', 'battle', 'club','clubName']
         data = super().to_representation(instance)
         if data['start_time'] and data['end_time']:
             t1 = time.strptime(

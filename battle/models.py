@@ -89,17 +89,17 @@ class Account(models.Model):
 class Games(models.Model):
     '''足球比赛'''
     # 标题
-    title = models.CharField(max_length=50, default='', null=True)
+    title = models.CharField(max_length=50,null=True, blank=True)
     # 比赛开始时间
-    start_time = models.DateTimeField(null=True)
+    start_time = models.DateTimeField(null=True, blank=True)
     # 比赛结束时间
-    end_time = models.DateTimeField(null=True)
+    end_time = models.DateTimeField(null=True, blank=True,)
     # 场地
     site = models.CharField(max_length=50, default='', blank=True, null=True)
     # 最小人数：几人制
-    mix_people = models.IntegerField(default=0, null=True)
+    min_people = models.IntegerField(default=0, null=True, blank=True,)
     # 最大报名人数
-    max_people = models.IntegerField(default=0, null=True)
+    max_people = models.IntegerField(default=0, null=True, blank=True,)
     # 是否公开约战
     open_battle = models.BooleanField(default=False)
     # 实价

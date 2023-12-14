@@ -13,18 +13,17 @@ class GameMembersViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         user = request.user
-        clubId = request.data.get('clubId')
-        gameId = request.data.get('gameId')
+        clubId = request.GET.get('clubId')
+        gameId = request.GET.get('gameId')
         user_club = UsersClubs.objects.filter(
             user_id=user.id, club_id=clubId).first()
         if user_club:
             queryset = self.filter_queryset(
                 self.get_queryset()).filter(game=gameId, club=clubId)
             serializer = self.get_serializer(queryset, many=True)
-            return Response({'ourTeam': serializer.data, 'rivalTeam': []}, status.HTTP_200_OK)
+            return Response(serializer.data, status.HTTP_200_OK)
         else:
-            raise exceptions.AuthenticationFailed(
-                {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
+           return Response({'msg': '非法操作'}, status.HTTP_403_FORBIDDEN)
 
     def retrieve(self, request, *args, **kwargs):
         raise exceptions.AuthenticationFailed(
@@ -36,11 +35,9 @@ class GameMembersViewSet(viewsets.ModelViewSet):
         clubId = self.request.data.get('clubId')
         gameId = self.request.data.get('gameId')
         if not gameId:
-            raise exceptions.AuthenticationFailed(
-                {'status': status.HTTP_403_FORBIDDEN, 'msg': '比赛ID不能为空'})
+            return Response({'msg': '比赛ID不能为空'}, status.HTTP_403_FORBIDDEN)
         if not clubId:
-            raise exceptions.AuthenticationFailed(
-                {'status': status.HTTP_403_FORBIDDEN, 'msg': '球队ID不能为空'})
+            return Response({'msg': '球队ID不能为空'}, status.HTTP_403_FORBIDDEN)
 
         user_blub = UsersClubs.objects.filter(
             user_id=user.id, club_id=clubId).first()
@@ -65,4 +62,4 @@ class GameMembersViewSet(viewsets.ModelViewSet):
             instance.delete()
         else:
             raise exceptions.AuthenticationFailed(
-                {'status': status.HTTP_403_FORBIDDEN, 'msg': '您无权操作'})
+                {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})

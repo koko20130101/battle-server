@@ -26,6 +26,8 @@ class GamesViewSet(viewsets.ModelViewSet):
             else:
                 serializer = self.get_serializer(queryset, many=True)
             return Response(serializer.data, status.HTTP_200_OK)
+        else:
+            return Response([], status.HTTP_200_OK)
 
     def retrieve(self, request, *args, **kwargs):
         # 详情
