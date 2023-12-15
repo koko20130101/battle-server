@@ -108,7 +108,7 @@ class GamesSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         path = self.context['request'].path
         usefields = ['id', 'title', 'game_date', 'start_time', 'end_time',
-                     'site', 'max_people', 'status', 'brief', 'battle', 'club','clubName']
+                     'site', 'max_people', 'status', 'brief', 'battle', 'club','clubName','tag']
         data = super().to_representation(instance)
         if data['start_time'] and data['end_time']:
             t1 = time.strptime(
