@@ -143,7 +143,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
-# “约球了”小程序ID和秘钥
+# 约球来战小程序ID和秘钥
 APP_ID = 'wxfae4ccacf0464799'
 SECRET = 'c94a87c176164dc191c5109b6ed2b928'
 

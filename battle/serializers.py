@@ -108,7 +108,7 @@ class GamesSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         path = self.context['request'].path
         usefields = ['id', 'title', 'game_date', 'start_time', 'end_time',
-                     'site', 'max_people', 'status', 'brief', 'battle', 'club','clubName','tag']
+                     'site', 'min_people','max_people', 'status', 'brief', 'battle', 'club','clubName','tag']
         data = super().to_representation(instance)
         if data['start_time'] and data['end_time']:
             t1 = time.strptime(
@@ -125,6 +125,9 @@ class GamesSerializer(serializers.ModelSerializer):
                 if field_name in usefields:
                     resData[field_name] = data[field_name]
         else:
+            members = GameMembers.objects.all().filter(game=instance.id)
+            # 总报名人数
+            data['joinTotal'] = len(members)
             resData = data
         return resData
 

@@ -23,7 +23,7 @@ class GameMembersViewSet(viewsets.ModelViewSet):
             serializer = self.get_serializer(queryset, many=True)
             return Response(serializer.data, status.HTTP_200_OK)
         else:
-           return Response({'msg': '非法操作'}, status.HTTP_403_FORBIDDEN)
+           return Response([], status.HTTP_200_OK)
 
     def retrieve(self, request, *args, **kwargs):
         raise exceptions.AuthenticationFailed(
@@ -58,8 +58,10 @@ class GameMembersViewSet(viewsets.ModelViewSet):
         user_blub = UsersClubs.objects.filter(
             user_id=user.id, club_id=instance.club).first()
 
-        if user_blub and instance.user == user:
-            instance.delete()
+        if user_blub:
+            if  instance.user == user or user_blub.role in [1,2]:
+                print(user_blub.role)
+                instance.delete()
         else:
             raise exceptions.AuthenticationFailed(
                 {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})

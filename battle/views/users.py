@@ -6,7 +6,9 @@ from battle.serializers import UsersSerializer
 from battle.models import Users
 from battle.permissions import IsOwner
 from config.settings import APP_ID, SECRET
-from common.utils import getSessionInfo
+from common.utils import getSessionInfo, getAccessToken, getUnlimited
+from PIL import Image
+from io import BytesIO
 
 
 class UsersViewSet(viewsets.ModelViewSet):
@@ -95,6 +97,19 @@ class UsersViewSet(viewsets.ModelViewSet):
                     return Response({'msg': serializer.errors})
         else:
             return Response({'msg': 'jsCode不能为空'}, status.HTTP_503_SERVICE_UNAVAILABLE)
+            
+        # 生成小程序二维码
+    @action(methods=['POST'], detail=False, permission_classes=[permissions.IsAuthenticated])
+    def getWxacode(self, request, *args, **kwargs):
+        username = self.request.user.username
+        access_token = getAccessToken(APP_ID, SECRET)
+        imgBuffer = getUnlimited(access_token, request.data)
+        img = Image.open(BytesIO(imgBuffer))
+        imgName = username[-8:-1]+'.jpg'
+        imgPath = '/root/assets/battle/qrcode/'+imgName
+        img.save(imgPath)
+        return Response({'imgUrl': 'https://www.scbbsc.com/source/battle/qrcode/'+imgName})
+
 
     # 用户信息
     @action(methods=['POST'], detail=False, permission_classes=[permissions.IsAuthenticated, IsOwner])

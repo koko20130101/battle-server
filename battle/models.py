@@ -108,12 +108,12 @@ class Games(models.Model):
     cancel_time = models.IntegerField(default=0, null=True, blank=True,)
     # 是否公开约战
     open_battle = models.BooleanField(default=False)
-    # 实价
-    price = models.FloatField(default=0, blank=True)
+    # 优惠价
+    price = models.FloatField(blank=True, null=True)
     # 原价
-    original_price = models.FloatField(default=0, blank=True)
+    original_price = models.FloatField(blank=True, null=True)
     # 其它费用
-    cost = models.FloatField(default=0, blank=True)
+    cost = models.FloatField(blank=True,null=True)
     # 比赛状态  0：比赛中  1：未结算  2：比赛结束
     status = models.IntegerField(default=0)
     # 简介

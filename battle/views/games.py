@@ -35,12 +35,21 @@ class GamesViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         user_blub = UsersClubs.objects.filter(
             user_id=user.id, club_id=instance.club).first()
+        serializer = self.get_serializer(instance)
         if user_blub:
-            serializer = self.get_serializer(instance)
-            return Response(serializer.data)
+            # 队员
+            return Response({'isMember':True,**serializer.data},status.HTTP_200_OK)
         else:
-            raise exceptions.AuthenticationFailed(
-                {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
+            # 非队员
+            usefields = ['id', 'title', 'game_date', 'start_time', 'end_time',
+                     'site', 'min_people','max_people', 'brief', 'battle', 'club','clubName','tag']
+            resData={'isMember':False}
+            for field_name in serializer.data:
+                if field_name in usefields:
+                    resData[field_name] = serializer.data[field_name]
+                    print(88)
+            return Response(resData,status.HTTP_200_OK)
+            
 
     def perform_create(self, serializer):
         # 创建
