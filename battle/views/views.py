@@ -1,8 +1,8 @@
 from rest_framework import viewsets, permissions, status, exceptions
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from battle.serializers import ApplySerializer, PlaygroundsSerializer, UsersClubsSerializer, UploadImagesSerializer
-from battle.models import Clubs, UsersClubs, Apply, Playgrounds,  UploadImages
+from battle.serializers import ApplySerializer, UsersClubsSerializer, UploadImagesSerializer
+from battle.models import Clubs, UsersClubs, Apply,  UploadImages
 
 
 class MembersViewSet(viewsets.ModelViewSet):
@@ -132,26 +132,6 @@ class ApplyViewSet(viewsets.ModelViewSet):
         else:
             raise exceptions.AuthenticationFailed(
                 {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
-
-
-class PlaygroundsViewSet(viewsets.ModelViewSet):
-    '''球场视图集'''
-    queryset = Playgrounds.objects.all()
-    serializer_class = PlaygroundsSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    # 指定可以过滤字段
-    filterset_fields = ['playground_name']
-
-    def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(
-            self.get_queryset())
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-        else:
-            serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data, status.HTTP_200_OK)
-
 
 class ImageUploadViewSet(viewsets.ModelViewSet):
     '''上传图片视图集'''

@@ -10,6 +10,8 @@ class Users(AbstractUser):
     real_name = models.CharField(max_length=15, blank=True)
     nick_name = models.CharField(max_length=50, blank=True)
     avatar = models.URLField(blank=True)
+    # 荣誉值
+    honor = models.IntegerField(default=0, blank=True)
 
     class Meta:
         db_table = 'bt_users'
@@ -40,7 +42,7 @@ class Clubs(models.Model):
         'battle.Users', related_name='clubs_set', through='battle.UsersClubs')
     # 场地
     playgrounds = models.ManyToManyField(
-        'battle.Playgrounds', related_name='clubs_set', through='battle.ClubsPlayground')
+        'battle.Playgrounds', related_name='clubs_set', through='battle.ClubsPlaygrounds')
 
     class Meta:
         db_table = 'bt_clubs'
@@ -55,22 +57,10 @@ class UsersClubs(models.Model):
         'battle.Clubs', related_name='users_clubs_set', on_delete=models.CASCADE)
     # 用户在俱乐部中的角色， 1：超级管理  2：管理员  3：会员
     role = models.IntegerField(default=3)
+    role = models.IntegerField(default=3)
 
     class Meta:
         db_table = 'bt_users_clubs'
-
-
-class ClubsPlayground(models.Model):
-    '''俱乐部<==>场地，多对多中间表'''
-    playground = models.ForeignKey(
-        'battle.Playgrounds', related_name='clubs_playground_set', on_delete=models.CASCADE)
-    club = models.ForeignKey(
-        'battle.Clubs', related_name='clubs_playground_set', on_delete=models.CASCADE)
-    # 俱乐部场地的额外字段：优惠类型  0：无优惠  1：押金优惠 2：充值优惠
-    preferential = models.IntegerField(default=0)
-
-    class Meta:
-        db_table = 'bt_clubs_playground'
 
 
 class Account(models.Model):
@@ -89,9 +79,9 @@ class Account(models.Model):
 class Games(models.Model):
     '''足球比赛'''
     # 标题
-    title = models.CharField(max_length=50,null=True, blank=True)
+    title = models.CharField(max_length=50, null=True, blank=True)
     # 标签
-    tag = models.CharField(max_length=10,null=True, blank=True)
+    tag = models.CharField(max_length=10, null=True, blank=True)
     # 比赛开始时间
     start_time = models.DateTimeField(null=True, blank=True)
     # 比赛结束时间
@@ -113,7 +103,7 @@ class Games(models.Model):
     # 原价
     original_price = models.FloatField(blank=True, null=True)
     # 其它费用
-    cost = models.FloatField(blank=True,null=True)
+    cost = models.FloatField(blank=True, null=True)
     # 比赛状态  0：比赛中  1：未结算  2：比赛结束
     status = models.IntegerField(default=0)
     # 简介
@@ -179,18 +169,25 @@ class Playgrounds(models.Model):
     playground_name = models.CharField(max_length=30)
     # 球场类型 1：足球  2：篮球  3：羽毛球  4：乒乓球
     play_type = models.IntegerField(default=1)
-    # 省
-    province = models.CharField(max_length=20, null=True)
-    # 市
-    city = models.CharField(max_length=20, null=True)
-    # 区
-    region = models.CharField(max_length=20, null=True)
+    area = models.CharField(max_length=50, null=True)
+    area_code = models.CharField(max_length=50, null=True)
     # 详细地址
-    address = models.TextField(null=True)
+    address = models.TextField(blank=True, null=True)
 
     class Meta:
         db_table = 'bt_playground'
         ordering = ('id',)
+
+
+class ClubsPlaygrounds(models.Model):
+    '''俱乐部<==>场地，多对多中间表'''
+    playground = models.ForeignKey(
+        'battle.Playgrounds', related_name='clubs_playground_set', on_delete=models.CASCADE)
+    club = models.ForeignKey(
+        'battle.Clubs', related_name='clubs_playground_set', on_delete=models.CASCADE)
+
+    class Meta:
+        db_table = 'bt_clubs_playgrounds'
 
 
 class UploadImages(models.Model):

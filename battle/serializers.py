@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Users, Clubs, UsersClubs, Apply, Playgrounds, Games, GameMembers, UploadImages
+from .models import Users, Clubs, UsersClubs, Apply, Playgrounds, ClubsPlaygrounds, Games, GameMembers, UploadImages
 import time
 
 
@@ -81,15 +81,35 @@ class PlaygroundsSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+class ClubsPlaygroundsSerializer(serializers.ModelSerializer):
+    playgroundName = serializers.ReadOnlyField(
+        source='playground.playground_name')
+    playgroundId = serializers.ReadOnlyField(source='playground.id')
+
+    class Meta:
+        model = ClubsPlaygrounds
+        fields = '__all__'
+
+    def to_representation(self, instance):
+        usefields = ['id', 'playgroundName', 'playgroundId']
+        data = super().to_representation(instance)
+        resData = {}
+        for field_name in data:
+            if field_name in usefields:
+                resData[field_name] = data[field_name]
+        return resData
+
+
 class GameMembersSerializer(serializers.ModelSerializer):
     nickName = serializers.ReadOnlyField(source='user.nick_name')
     avatar = serializers.ReadOnlyField(source='user.avatar')
+
     class Meta:
         model = GameMembers
         fields = '__all__'
 
     def to_representation(self, instance):
-        usefields = ['id','user', 'nickName', 'avatar', 'remarks','cost']
+        usefields = ['id', 'user', 'nickName', 'avatar', 'remarks', 'cost']
         data = super().to_representation(instance)
         resData = {}
         for field_name in data:
@@ -101,6 +121,7 @@ class GameMembersSerializer(serializers.ModelSerializer):
 class GamesSerializer(serializers.ModelSerializer):
     clubName = serializers.ReadOnlyField(source='club.club_name')
     clubLogo = serializers.ReadOnlyField(source='club.club_logo')
+
     class Meta:
         model = Games
         fields = '__all__'
@@ -108,7 +129,7 @@ class GamesSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         path = self.context['request'].path
         usefields = ['id', 'title', 'game_date', 'start_time', 'end_time',
-                     'site', 'min_people','max_people', 'status', 'brief', 'battle', 'club','clubName','tag']
+                     'site', 'min_people', 'max_people', 'status', 'brief', 'battle', 'club', 'clubName', 'tag']
         data = super().to_representation(instance)
         if data['start_time'] and data['end_time']:
             t1 = time.strptime(
