@@ -88,6 +88,9 @@ class Games(models.Model):
     end_time = models.DateTimeField(null=True, blank=True)
     # 场地
     site = models.CharField(max_length=50, default='', blank=True, null=True)
+    # 场地
+    playground = models.ForeignKey(
+        'battle.Playgrounds', on_delete=models.DO_NOTHING, blank=True, null=True)
     # 最小人数：几人制
     min_people = models.IntegerField(default=0, null=True, blank=True,)
     # 最大报名人数

@@ -1,4 +1,5 @@
 from rest_framework import viewsets, permissions, status, exceptions
+from django.db.models import Q
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from battle.serializers import PlaygroundsSerializer
@@ -11,11 +12,16 @@ class PlaygroundsViewSet(viewsets.ModelViewSet):
     serializer_class = PlaygroundsSerializer
     permission_classes = [permissions.IsAuthenticated]
     # 指定可以过滤字段
-    filterset_fields = ['playground_name']
+    filterset_fields = ['playground_name', 'area']
 
     def list(self, request, *args, **kwargs):
-        raise exceptions.AuthenticationFailed(
-            {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+        else:
+            serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data, status.HTTP_200_OK)
 
     def perform_create(self, serializer):
         # 创建
@@ -48,7 +54,7 @@ class PlaygroundsViewSet(viewsets.ModelViewSet):
             # serializer = self.get_serializer(queryset, many=True)
             return Response(serializer.data, status.HTTP_200_OK)
         else:
-            return Response({'msg': '非法操作'}, status.HTTP_403_FORBIDDEN)
+            return Response([], status.HTTP_200_OK)
 
     @action(methods=['POST'], detail=False, permission_classes=[permissions.IsAuthenticated])
     def addPlayground(self, request, *args, **kwargs):
@@ -66,7 +72,7 @@ class PlaygroundsViewSet(viewsets.ModelViewSet):
             if playground_instance:
                 if not id:
                     # 同地区，同名
-                    return Response({'msg': '场地已存在该地区，请在查询结果中选择'}, status.HTTP_403_FORBIDDEN)
+                    return Response({'msg': '球场已存在，请在查询结果中选择'}, status.HTTP_403_FORBIDDEN)
                 else:
                     # 绑定场地到球队
                     user_blub.club.playgrounds.add(playground_instance)
@@ -90,8 +96,10 @@ class PlaygroundsViewSet(viewsets.ModelViewSet):
         user_blub = UsersClubs.objects.filter(
             user_id=user.id, club_id=clubId).first()
         if user_blub and user_blub.role in [1, 2]:
-            playground_instance = user_blub.club.playgrounds.filter(id=id).first()
+            playground_instance = user_blub.club.playgrounds.filter(
+                id=id).first()
             if playground_instance:
+                # 删除场地绑定关系
                 user_blub.club.playgrounds.remove(playground_instance)
             else:
                 return Response({'msg': '找不到记录'}, status.HTTP_403_FORBIDDEN)
