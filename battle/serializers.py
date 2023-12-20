@@ -121,6 +121,8 @@ class GameMembersSerializer(serializers.ModelSerializer):
 class GamesSerializer(serializers.ModelSerializer):
     clubName = serializers.ReadOnlyField(source='club.club_name')
     clubLogo = serializers.ReadOnlyField(source='club.club_logo')
+    site = serializers.ReadOnlyField(
+        source='playground.playground_name')
 
     class Meta:
         model = Games

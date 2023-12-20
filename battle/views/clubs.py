@@ -52,12 +52,18 @@ class ClubsViewSet(viewsets.ModelViewSet):
                 result['role'] = user_blub.role
         return Response({**result, **serializer.data})
 
-    def perform_destroy(self, instance):
+    def destroy(self, request, *args, **kwargs):
         # 删除
+        instance = self.get_object()
         user = self.request.user
         if instance.creator == user:
             # 只有创建者才可以删除
-            instance.delete()
+            if len(instance.members.values()) > 1:
+                return Response({'msg': '请先手动删除其它成员才能解散球队！'},
+                                status.HTTP_403_FORBIDDEN)
+            else:
+                instance.delete()
+                return Response(status=status.HTTP_204_NO_CONTENT)
         else:
             raise exceptions.AuthenticationFailed(
                 {'status': status.HTTP_403_FORBIDDEN, 'msg': '您无权操作'})

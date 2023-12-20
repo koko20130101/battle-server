@@ -64,16 +64,37 @@ class UsersClubs(models.Model):
 
 
 class Account(models.Model):
-    '''优惠账户'''
+    '''个人账户'''
     # 余额
     balance = models.FloatField(blank=True)
+    # 账户类型  1:充值   2：押金
+    account_type = models.IntegerField(default=1, blank=True)
     # 对应用户
     user = models.ForeignKey('battle.Users', on_delete=models.CASCADE)
     # 对应俱乐部
-    club = models.ForeignKey('battle.Clubs', on_delete=models.CASCADE)
+    club = models.ForeignKey('battle.Clubs', on_delete=models.DO_NOTHING)
+    # 对应球场
+    playground = models.ForeignKey(
+        'battle.Playgrounds', on_delete=models.DO_NOTHING)
 
     class Meta:
         db_table = 'bt_account'
+
+
+class ClubAccount(models.Model):
+    '''球队账户'''
+    # 余额
+    balance = models.FloatField(blank=True)
+    # 账户类型  1:充值   2：押金
+    account_type = models.IntegerField(default=1, blank=True)
+    # 对应俱乐部
+    club = models.ForeignKey('battle.Clubs', on_delete=models.CASCADE)
+    # 对应球场
+    playground = models.ForeignKey(
+        'battle.Playgrounds', on_delete=models.DO_NOTHING)
+
+    class Meta:
+        db_table = 'bt_club_account'
 
 
 class Games(models.Model):
@@ -86,8 +107,6 @@ class Games(models.Model):
     start_time = models.DateTimeField(null=True, blank=True)
     # 比赛结束时间
     end_time = models.DateTimeField(null=True, blank=True)
-    # 场地
-    site = models.CharField(max_length=50, default='', blank=True, null=True)
     # 场地
     playground = models.ForeignKey(
         'battle.Playgrounds', on_delete=models.DO_NOTHING, blank=True, null=True)
