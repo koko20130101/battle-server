@@ -57,7 +57,6 @@ class UsersClubs(models.Model):
         'battle.Clubs', related_name='users_clubs_set', on_delete=models.CASCADE)
     # 用户在俱乐部中的角色， 1：超级管理  2：管理员  3：会员
     role = models.IntegerField(default=3)
-    role = models.IntegerField(default=3)
 
     class Meta:
         db_table = 'bt_users_clubs'
@@ -81,6 +80,27 @@ class Account(models.Model):
         db_table = 'bt_account'
 
 
+class AccountRecord(models.Model):
+    '''个人账户充值和消费记录'''
+    # 金额
+    amount = models.FloatField(blank=True)
+    # 动账类型  1:充值   2：消费
+    amount_type = models.IntegerField()
+    # 对应比赛
+    game = models.ForeignKey(
+        'battle.Games', on_delete=models.DO_NOTHING, null=True)
+    # 对应用户
+    user = models.ForeignKey('battle.Users', on_delete=models.CASCADE)
+    # 对应俱乐部
+    club = models.ForeignKey('battle.Clubs', on_delete=models.DO_NOTHING)
+    # 对应球场
+    playground = models.ForeignKey(
+        'battle.Playgrounds', on_delete=models.DO_NOTHING)
+
+    class Meta:
+        db_table = 'bt_account_record'
+
+
 class ClubAccount(models.Model):
     '''球队账户'''
     # 余额
@@ -95,6 +115,25 @@ class ClubAccount(models.Model):
 
     class Meta:
         db_table = 'bt_club_account'
+
+
+class ClubAccountRecord(models.Model):
+    '''球队账户充值和消费记录'''
+    # 金额
+    amount = models.FloatField()
+    # 动账类型  1:充值   2：消费
+    amount_type = models.IntegerField(default=1)
+    # 对应比赛
+    game = models.ForeignKey(
+        'battle.Games', on_delete=models.CASCADE, blank=True, null=True)
+    # 对应俱乐部
+    club = models.ForeignKey('battle.Clubs', on_delete=models.DO_NOTHING)
+    # 对应球场
+    playground = models.ForeignKey(
+        'battle.Playgrounds', on_delete=models.DO_NOTHING)
+
+    class Meta:
+        db_table = 'bt_club_account_record'
 
 
 class Games(models.Model):

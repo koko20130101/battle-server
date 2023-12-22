@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Users, Clubs, UsersClubs, Apply, Playgrounds, ClubsPlaygrounds, Games, GameMembers, UploadImages
+from .models import Users, Clubs, UsersClubs, Apply, Playgrounds, ClubsPlaygrounds, Games, GameMembers, UploadImages, ClubAccount, ClubAccountRecord
 import time
 
 
@@ -153,6 +153,30 @@ class GamesSerializer(serializers.ModelSerializer):
             data['joinTotal'] = len(members)
             resData = data
         return resData
+
+
+class ClubAccountSerializer(serializers.ModelSerializer):
+    playground = serializers.ReadOnlyField(source='playground.playground_name')
+
+    class Meta:
+        model = ClubAccount
+        fields = '__all__'
+
+
+class ClubAccountSerializer(serializers.ModelSerializer):
+    playgroundName = serializers.ReadOnlyField(
+        source='playground.playground_name')
+
+    class Meta:
+        model = ClubAccount
+        fields = '__all__'
+
+
+class ClubAccountRecordSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = ClubAccountRecord
+        fields = '__all__'
 
 
 class UploadImagesSerializer(serializers.ModelSerializer):
