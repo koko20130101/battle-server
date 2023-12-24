@@ -11,15 +11,18 @@ class GamesViewSet(viewsets.ModelViewSet):
     queryset = Games.objects.all()
     serializer_class = GamesSerializer
     permission_classes = [permissions.IsAuthenticated]
+    # filterset_fields = ['status']
 
     def list(self, request, *args, **kwargs):
         user = request.user
+        game_status = request.GET.get('status')
         user_club = UsersClubs.objects.filter(user_id=user.id)
+
         if user_club:
             # 查询用户所属球队的比赛
             clubsIds = list(i.club_id for i in user_club)
             queryset = self.filter_queryset(
-                self.get_queryset()).filter(club__in=clubsIds)
+                self.get_queryset()).filter(club__in=clubsIds,status__in=[game_status] if game_status else [0,1])
             page = self.paginate_queryset(queryset)
             if page is not None:
                 serializer = self.get_serializer(page, many=True)
@@ -47,7 +50,6 @@ class GamesViewSet(viewsets.ModelViewSet):
             for field_name in serializer.data:
                 if field_name in usefields:
                     resData[field_name] = serializer.data[field_name]
-                    print(88)
             return Response(resData,status.HTTP_200_OK)
             
 

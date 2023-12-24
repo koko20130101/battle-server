@@ -86,11 +86,12 @@ class AccountRecord(models.Model):
     amount = models.FloatField(blank=True)
     # 动账类型  1:充值   2：消费
     amount_type = models.IntegerField()
+    created = models.DateTimeField(auto_now_add=True)
     # 对应比赛
     game = models.ForeignKey(
-        'battle.Games', on_delete=models.DO_NOTHING, null=True)
+        'battle.Games', on_delete=models.DO_NOTHING,blank=True, null=True)
     # 对应用户
-    user = models.ForeignKey('battle.Users', on_delete=models.CASCADE)
+    user = models.ForeignKey('battle.Users', on_delete=models.CASCADE,blank=True, null=True)
     # 对应俱乐部
     club = models.ForeignKey('battle.Clubs', on_delete=models.DO_NOTHING)
     # 对应球场
@@ -115,25 +116,6 @@ class ClubAccount(models.Model):
 
     class Meta:
         db_table = 'bt_club_account'
-
-
-class ClubAccountRecord(models.Model):
-    '''球队账户充值和消费记录'''
-    # 金额
-    amount = models.FloatField()
-    # 动账类型  1:充值   2：消费
-    amount_type = models.IntegerField(default=1)
-    # 对应比赛
-    game = models.ForeignKey(
-        'battle.Games', on_delete=models.CASCADE, blank=True, null=True)
-    # 对应俱乐部
-    club = models.ForeignKey('battle.Clubs', on_delete=models.DO_NOTHING)
-    # 对应球场
-    playground = models.ForeignKey(
-        'battle.Playgrounds', on_delete=models.DO_NOTHING)
-
-    class Meta:
-        db_table = 'bt_club_account_record'
 
 
 class Games(models.Model):
@@ -165,7 +147,7 @@ class Games(models.Model):
     original_price = models.FloatField(blank=True, null=True)
     # 其它费用
     cost = models.FloatField(blank=True, null=True)
-    # 比赛状态  0：比赛中  1：未结算  2：比赛结束
+    # 比赛状态  0：比赛中  1：比赛结束
     status = models.IntegerField(default=0)
     # 简介
     brief = models.TextField(blank=True)
@@ -178,7 +160,7 @@ class Games(models.Model):
     club = models.ForeignKey(
         'battle.Clubs', on_delete=models.CASCADE, null=True)
     # 留言
-    remarks = models.CharField(max_length=50, null=True)
+    remarks = models.CharField(max_length=50,blank=True, null=True)
 
     class Meta:
         db_table = 'bt_games'
@@ -188,7 +170,7 @@ class Games(models.Model):
 class GameMembers(models.Model):
     '''比赛报名人员'''
     # 备注
-    remarks = models.CharField(max_length=30, null=True)
+    remarks = models.CharField(max_length=30,blank=True,  null=True)
     # 进球数
     goal = models.IntegerField(default=0)
     group = models.IntegerField(default=0)

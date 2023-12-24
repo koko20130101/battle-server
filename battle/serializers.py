@@ -1,6 +1,7 @@
 from rest_framework import serializers
-from .models import Users, Clubs, UsersClubs, Apply, Playgrounds, ClubsPlaygrounds, Games, GameMembers, UploadImages, ClubAccount, ClubAccountRecord
+from .models import Users, Clubs, UsersClubs, Apply, Playgrounds, ClubsPlaygrounds, Games, GameMembers, UploadImages, ClubAccount, Account, AccountRecord
 import time
+from datetime import datetime, timedelta
 
 
 class ClubsSerializer(serializers.ModelSerializer):
@@ -134,10 +135,15 @@ class GamesSerializer(serializers.ModelSerializer):
                      'site', 'min_people', 'max_people', 'status', 'brief', 'battle', 'club', 'clubName', 'tag']
         data = super().to_representation(instance)
         if data['start_time'] and data['end_time']:
+            
+                # data['end_time'].timestamp() < (datetime.now() - timedelta(days=1)).timestamp()
             t1 = time.strptime(
                 data['start_time'], '%Y-%m-%dT%H:%M:%S+08:00')
             t2 = time.strptime(
                 data['end_time'], '%Y-%m-%dT%H:%M:%S+08:00')
+            if data['status'] !=2:
+                if datetime.now().timestamp() > datetime.strptime(data['end_time'], '%Y-%m-%dT%H:%M:%S+08:00').timestamp():
+                    data['status'] = 1
             data['game_date'] = time.strftime('%Y-%m-%d', t1)
             data['start_time'] = time.strftime('%H:%M', t1)
             data['end_time'] = time.strftime('%H:%M', t2)
@@ -156,14 +162,6 @@ class GamesSerializer(serializers.ModelSerializer):
 
 
 class ClubAccountSerializer(serializers.ModelSerializer):
-    playground = serializers.ReadOnlyField(source='playground.playground_name')
-
-    class Meta:
-        model = ClubAccount
-        fields = '__all__'
-
-
-class ClubAccountSerializer(serializers.ModelSerializer):
     playgroundName = serializers.ReadOnlyField(
         source='playground.playground_name')
 
@@ -172,12 +170,21 @@ class ClubAccountSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-class ClubAccountRecordSerializer(serializers.ModelSerializer):
-
+class AccountSerializer(serializers.ModelSerializer):
+    playgroundName = serializers.ReadOnlyField(
+        source='playground.playground_name')
     class Meta:
-        model = ClubAccountRecord
+        model = Account
         fields = '__all__'
 
+class AccountRecordSerializer(serializers.ModelSerializer):
+    playgroundName = serializers.ReadOnlyField(
+        source='playground.playground_name')
+    userName = serializers.ReadOnlyField(
+        source='user.nick_name')
+    class Meta:
+        model = AccountRecord
+        fields = '__all__'
 
 class UploadImagesSerializer(serializers.ModelSerializer):
     class Meta:

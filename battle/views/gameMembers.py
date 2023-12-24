@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from battle.serializers import GameMembersSerializer
 from battle.models import UsersClubs, Games, GameMembers
 from config.settings import APP_ID, SECRET
+from datetime import datetime,timedelta
 
 
 class GameMembersViewSet(viewsets.ModelViewSet):
@@ -60,8 +61,12 @@ class GameMembersViewSet(viewsets.ModelViewSet):
 
         if user_blub:
             if  instance.user == user or user_blub.role in [1,2]:
-                print(user_blub.role)
-                instance.delete()
+                if instance.game.start_time:
+                    # print(timedelta(hours=1))
+                    print(instance.game.start_time)
+                    # print((datetime(instance.game.end_time) + timedelta(hours=1)).timestamp())
+                    # print((datetime(instance.game.end_time) + timedelta(hours=1)).timestamp())
+                    # instance.delete()
         else:
             raise exceptions.AuthenticationFailed(
                 {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
