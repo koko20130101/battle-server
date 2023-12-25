@@ -3,7 +3,7 @@ from pymysql import NULL
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from battle.serializers import GamesSerializer
-from battle.models import Clubs, UsersClubs, Games
+from battle.models import Clubs, UsersClubs, Games, GameMembers
 from datetime import datetime
 
 
@@ -22,7 +22,7 @@ class GamesViewSet(viewsets.ModelViewSet):
             # 查询用户所属球队的比赛
             clubsIds = list(i.club_id for i in user_club)
             queryset = self.filter_queryset(
-                self.get_queryset()).filter(club__in=clubsIds,status__in=[game_status] if game_status else [0,1])
+                self.get_queryset()).filter(club__in=clubsIds, status__in=[game_status] if game_status else [0, 1])
             page = self.paginate_queryset(queryset)
             if page is not None:
                 serializer = self.get_serializer(page, many=True)
@@ -41,17 +41,16 @@ class GamesViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(instance)
         if user_blub:
             # 队员
-            return Response({'isMember':True,**serializer.data},status.HTTP_200_OK)
+            return Response({'isMember': True, **serializer.data}, status.HTTP_200_OK)
         else:
             # 非队员
             usefields = ['id', 'title', 'game_date', 'start_time', 'end_time',
-                     'site', 'min_people','max_people', 'brief', 'battle', 'club','clubName','tag']
-            resData={'isMember':False}
+                         'site', 'min_people', 'max_people', 'brief', 'battle', 'club', 'clubName', 'tag']
+            resData = {'isMember': False}
             for field_name in serializer.data:
                 if field_name in usefields:
                     resData[field_name] = serializer.data[field_name]
-            return Response(resData,status.HTTP_200_OK)
-            
+            return Response(resData, status.HTTP_200_OK)
 
     def perform_create(self, serializer):
         # 创建
@@ -73,13 +72,18 @@ class GamesViewSet(viewsets.ModelViewSet):
             raise exceptions.AuthenticationFailed(
                 {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
 
-    def perform_destroy(self, instance):
+    def destroy(self, request, *args, **kwargs):
         # 删除
+        instance = self.get_object()
         user = self.request.user
         user_blub = UsersClubs.objects.filter(
             user_id=user.id, club_id=instance.club).first()
         if user_blub and user_blub.role in [1, 2]:
-            instance.delete()
+            if instance.status == 2:
+                return Response({'msg': '比赛已结束，不能删除'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            else:
+                instance.delete()
+                return Response({'msg': '删除成功'}, status=status.HTTP_200_OK)
         else:
             raise exceptions.AuthenticationFailed(
                 {'status': status.HTTP_403_FORBIDDEN, 'msg': '您无权操作'})
@@ -87,11 +91,12 @@ class GamesViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         # 编辑
         user = self.request.user
+        gameStatus = self.request.data.get('status')
         instance = self.get_object()
         user_blub = UsersClubs.objects.filter(
             user_id=user.id, club_id=instance.club).first()
 
-        if user_blub and user_blub.role in [1, 2]:
+        if user_blub and user_blub.role in [1, 2] and gameStatus == instance.status:
             serializer.save()
         else:
             raise exceptions.AuthenticationFailed(
@@ -113,9 +118,9 @@ class GamesViewSet(viewsets.ModelViewSet):
     def battle(self, request, *args, **kwargs):
         # 应战
         user = self.request.user
-        gameId = self.request.data.get('gameId')
-        battleId = self.request.data.get('battleId')
-        active = self.request.data.get('active')
+        gameId = request.data.get('gameId')
+        battleId = request.data.get('battleId')
+        active = request.data.get('active')
 
         game_instance = self.get_queryset().get(id=gameId)
         battle_instance = self.get_queryset().get(id=battleId)
@@ -137,3 +142,32 @@ class GamesViewSet(viewsets.ModelViewSet):
         else:
             raise exceptions.AuthenticationFailed(
                 {'status': status.HTTP_403_FORBIDDEN, 'msg': '您无权操作'})
+
+    @action(methods=['POST'], detail=False, permission_classes=[permissions.IsAuthenticated])
+    def settlement(self, request, *args, **kwargs):
+        # 结算
+        user = self.request.user
+        gameId = request.data.get('gameId')
+        instance = self.get_queryset().get(id=gameId)
+        user_blub = UsersClubs.objects.filter(
+            user_id=user.id, club_id=instance.club.id).first()
+        if user_blub and user_blub.role in [1, 2]:
+            gameMembersInstance = GameMembers.objects.all().filter(
+                game=gameId, club=instance.club.id)
+            # 有效结算人数，剔除接替者
+            activeMembers = gameMembersInstance if instance.max_people == 0 else gameMembersInstance[
+                0:instance.max_people]
+            gameMembersIds = list(i.user.id for i in activeMembers)
+            if len(list(set(gameMembersIds))) < 2:
+                return Response({'msg': '报名用户少于2人不能结算'}, status.HTTP_403_FORBIDDEN)
+
+            if instance.original_price == 0 and instance.cost == 0:
+                return Response({'msg': '场租原价或费用不能为空'}, status.HTTP_403_FORBIDDEN)
+
+            total_price_1 = instance.original_price + instance.cost
+            for member in activeMembers:
+                member.cost = total_price_1/len(activeMembers)
+                member.save()
+            instance.status = 2
+            instance.save()
+            return Response({'msg': 'ok'}, status.HTTP_200_OK)

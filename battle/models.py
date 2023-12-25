@@ -89,9 +89,10 @@ class AccountRecord(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     # 对应比赛
     game = models.ForeignKey(
-        'battle.Games', on_delete=models.DO_NOTHING,blank=True, null=True)
+        'battle.Games', on_delete=models.DO_NOTHING, blank=True, null=True)
     # 对应用户
-    user = models.ForeignKey('battle.Users', on_delete=models.CASCADE,blank=True, null=True)
+    user = models.ForeignKey(
+        'battle.Users', on_delete=models.CASCADE, blank=True, null=True)
     # 对应俱乐部
     club = models.ForeignKey('battle.Clubs', on_delete=models.DO_NOTHING)
     # 对应球场
@@ -142,11 +143,11 @@ class Games(models.Model):
     # 是否公开约战
     open_battle = models.BooleanField(default=False)
     # 优惠价
-    price = models.FloatField(blank=True, null=True)
+    price = models.FloatField(blank=True)
     # 原价
-    original_price = models.FloatField(blank=True, null=True)
+    original_price = models.FloatField(blank=True)
     # 其它费用
-    cost = models.FloatField(blank=True, null=True)
+    cost = models.FloatField(blank=True)
     # 比赛状态  0：比赛中  1：比赛结束
     status = models.IntegerField(default=0)
     # 简介
@@ -160,7 +161,7 @@ class Games(models.Model):
     club = models.ForeignKey(
         'battle.Clubs', on_delete=models.CASCADE, null=True)
     # 留言
-    remarks = models.CharField(max_length=50,blank=True, null=True)
+    remarks = models.CharField(max_length=50, blank=True, null=True)
 
     class Meta:
         db_table = 'bt_games'
@@ -170,12 +171,12 @@ class Games(models.Model):
 class GameMembers(models.Model):
     '''比赛报名人员'''
     # 备注
-    remarks = models.CharField(max_length=30,blank=True,  null=True)
+    remarks = models.CharField(max_length=30, blank=True,  null=True)
     # 进球数
     goal = models.IntegerField(default=0)
     group = models.IntegerField(default=0)
     # 费用
-    cost = models.FloatField(null=True)
+    cost = models.CharField(max_length=10, blank=True,  null=True)
     # 所属球队
     club = models.ForeignKey(
         'battle.Clubs', on_delete=models.CASCADE, null=True)

@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from battle.serializers import GameMembersSerializer
 from battle.models import UsersClubs, Games, GameMembers
 from config.settings import APP_ID, SECRET
-from datetime import datetime,timedelta
+from datetime import datetime, timedelta
 
 
 class GameMembersViewSet(viewsets.ModelViewSet):
@@ -24,17 +24,18 @@ class GameMembersViewSet(viewsets.ModelViewSet):
             serializer = self.get_serializer(queryset, many=True)
             return Response(serializer.data, status.HTTP_200_OK)
         else:
-           return Response([], status.HTTP_200_OK)
+            return Response([], status.HTTP_200_OK)
 
     def retrieve(self, request, *args, **kwargs):
         raise exceptions.AuthenticationFailed(
             {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
 
-    def perform_create(self, serializer):
+    def create(self, request, *args, **kwargs):
         # 申请比赛
-        user = self.request.user
-        clubId = self.request.data.get('clubId')
-        gameId = self.request.data.get('gameId')
+        user = request.user
+        clubId = request.data.get('clubId')
+        gameId = request.data.get('gameId')
+        serializer = self.get_serializer(data=request.data)
         if not gameId:
             return Response({'msg': '比赛ID不能为空'}, status.HTTP_403_FORBIDDEN)
         if not clubId:
@@ -45,28 +46,36 @@ class GameMembersViewSet(viewsets.ModelViewSet):
         game = Games.objects.get(id=gameId)
 
         if user_blub and game.club.id == user_blub.club_id:
-            serializer.save(club=game.club)
-            serializer.save(game=game)
-            serializer.save(user=user)
-            return Response({'msg': '创建成功'}, status.HTTP_200_OK)
+            if game.start_time:
+                if datetime.now().timestamp() > game.start_time.timestamp():
+                    return Response({'msg': '超过比赛开始时间，不能报名'}, status.HTTP_403_FORBIDDEN)
+            if serializer.is_valid():
+                serializer.save(club=game.club)
+                serializer.save(game=game)
+                serializer.save(user=user)
+                return Response({'msg': '创建成功'}, status.HTTP_201_CREATED)
         else:
             raise exceptions.AuthenticationFailed(
                 {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
 
-    def perform_destroy(self, instance):
+    def destroy(self, request, *args, **kwargs):
         # 退出比赛
-        user = self.request.user
+        user = request.user
+        instance = self.get_object()
         user_blub = UsersClubs.objects.filter(
             user_id=user.id, club_id=instance.club).first()
 
         if user_blub:
-            if  instance.user == user or user_blub.role in [1,2]:
+            if user_blub.role in [1, 2]:
+                instance.delete()
+                return Response({'msg': '取消成功'}, status.HTTP_204_NO_CONTENT)
+            if instance.user == user:
                 if instance.game.start_time:
-                    # print(timedelta(hours=1))
-                    print(instance.game.start_time)
-                    # print((datetime(instance.game.end_time) + timedelta(hours=1)).timestamp())
-                    # print((datetime(instance.game.end_time) + timedelta(hours=1)).timestamp())
-                    # instance.delete()
+                    if datetime.now().timestamp() > (instance.game.start_time - timedelta(hours=instance.game.cancel_time)).timestamp():
+                        return Response({'msg': '超过取消时间，请联系管理员'}, status.HTTP_403_FORBIDDEN)
+                    else:
+                        instance.delete()
+                        return Response({'msg': '取消成功'}, status.HTTP_204_NO_CONTENT)
         else:
             raise exceptions.AuthenticationFailed(
                 {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
