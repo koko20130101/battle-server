@@ -27,9 +27,8 @@ class Clubs(models.Model):
     # 创建者
     creator = models.ForeignKey(
         'battle.Users', related_name='clubs_set1', on_delete=models.DO_NOTHING, null=True)
-    # 队长
-    captain = models.ForeignKey(
-        'battle.Users', related_name='clubs_set2', on_delete=models.DO_NOTHING, null=True)
+    # 类型 1:足球  2：篮球
+    club_type = models.IntegerField(default=1)
     brief = models.TextField(blank=True)
     # 排序
     sort = models.IntegerField(default=0)
@@ -81,7 +80,7 @@ class Account(models.Model):
 
 
 class AccountRecord(models.Model):
-    '''个人账户充值和消费记录'''
+    '''充值和消费记录'''
     # 金额
     amount = models.FloatField(blank=True)
     # 动账类型  1:充值   2：消费
@@ -176,7 +175,7 @@ class GameMembers(models.Model):
     goal = models.IntegerField(default=0)
     group = models.IntegerField(default=0)
     # 费用
-    cost = models.CharField(max_length=10, blank=True,  null=True)
+    cost = models.CharField(max_length=50, blank=True,  null=True)
     # 所属球队
     club = models.ForeignKey(
         'battle.Clubs', on_delete=models.CASCADE, null=True)
@@ -229,6 +228,8 @@ class ClubsPlaygrounds(models.Model):
         'battle.Playgrounds', related_name='clubs_playground_set', on_delete=models.CASCADE)
     club = models.ForeignKey(
         'battle.Clubs', related_name='clubs_playground_set', on_delete=models.CASCADE)
+    # 主场
+    main = models.BooleanField(default=False)
 
     class Meta:
         db_table = 'bt_clubs_playgrounds'

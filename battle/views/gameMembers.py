@@ -66,6 +66,8 @@ class GameMembersViewSet(viewsets.ModelViewSet):
             user_id=user.id, club_id=instance.club).first()
 
         if user_blub:
+            if instance.game.status == 1:
+                return Response({'msg': '比赛已结束，不能取消'}, status.HTTP_403_FORBIDDEN)
             if user_blub.role in [1, 2]:
                 instance.delete()
                 return Response({'msg': '取消成功'}, status.HTTP_204_NO_CONTENT)

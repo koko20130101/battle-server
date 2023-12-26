@@ -12,7 +12,7 @@ class ClubsSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def to_representation(self, instance):
-        usefields = ['id', 'club_name', 'short_name', 'club_logo',
+        usefields = ['id', 'club_name', 'short_name', 'club_logo','club_type',
                      'sort', 'honor', 'brief', 'creator', 'need_apply', 'area', 'area_code']
         data = super().to_representation(instance)
         resData = {}
@@ -132,7 +132,7 @@ class GamesSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         path = self.context['request'].path
         usefields = ['id', 'title', 'game_date', 'start_time', 'end_time',
-                     'site', 'min_people', 'max_people', 'status', 'brief', 'battle', 'club', 'clubName', 'tag']
+                     'site', 'min_people', 'max_people', 'status', 'brief', 'battle', 'club', 'clubName', 'clubLogo', 'tag']
         data = super().to_representation(instance)
         if data['start_time'] and data['end_time']:
 
@@ -165,7 +165,7 @@ class GamesSerializer(serializers.ModelSerializer):
 class ClubAccountSerializer(serializers.ModelSerializer):
     playgroundName = serializers.ReadOnlyField(
         source='playground.playground_name')
-
+    
     class Meta:
         model = ClubAccount
         fields = '__all__'
@@ -174,6 +174,8 @@ class ClubAccountSerializer(serializers.ModelSerializer):
 class AccountSerializer(serializers.ModelSerializer):
     playgroundName = serializers.ReadOnlyField(
         source='playground.playground_name')
+    clubName = serializers.ReadOnlyField(
+        source='club.club_name')
 
     class Meta:
         model = Account
@@ -185,6 +187,8 @@ class AccountRecordSerializer(serializers.ModelSerializer):
         source='playground.playground_name')
     userName = serializers.ReadOnlyField(
         source='user.nick_name')
+    clubName = serializers.ReadOnlyField(
+        source='club.club_name')
 
     class Meta:
         model = AccountRecord

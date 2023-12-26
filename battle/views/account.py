@@ -2,8 +2,8 @@ from rest_framework import viewsets, permissions, status, exceptions
 from django.db.models import Q
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from battle.serializers import ClubAccountSerializer, AccountRecordSerializer,AccountSerializer, AccountRecordSerializer
-from battle.models import ClubAccount, AccountRecord, Clubs, Account
+from battle.serializers import ClubAccountSerializer, AccountRecordSerializer, AccountSerializer, AccountRecordSerializer
+from battle.models import ClubAccount, AccountRecord, Clubs, Account, UsersClubs
 
 
 class ClubAccountViewSet(viewsets.ModelViewSet):
@@ -35,6 +35,7 @@ class ClubAccountViewSet(viewsets.ModelViewSet):
 
     @action(methods=['POST'], detail=False, permission_classes=[permissions.IsAuthenticated])
     def recharge(self, request, *args, **kwargs):
+        # 充值
         user = request.user
         clubId = request.data.get('clubId')
         sum = request.data.get('sum')
@@ -51,13 +52,15 @@ class ClubAccountViewSet(viewsets.ModelViewSet):
         if club.creator == user:
             instance = self.filter_queryset(
                 self.get_queryset()).filter(club=club, playground=playground).first()
-            clubAccountRecord = AccountRecordSerializer(
-                data={'amount': sum, 'amount_type': 1, 'club': club.id, 'user': memberId,'playground': playground})
+            memberUser = UsersClubs.objects.all().filter(
+                id=memberId if memberId != '' else None).first()
+            accountRecord = AccountRecordSerializer(
+                data={'amount': sum, 'amount_type': 1, 'club': club.id, 'user': memberUser.user.id if memberUser else None, 'playground': playground})
             if instance:
                 instance.balance += float(sum)
                 instance.save()
-                if clubAccountRecord.is_valid():
-                    clubAccountRecord.save()
+                if accountRecord.is_valid():
+                    accountRecord.save()
             else:
                 # 新账户
                 accountData = {
@@ -66,16 +69,18 @@ class ClubAccountViewSet(viewsets.ModelViewSet):
                     'balance': float(sum)
                 }
                 serializer = self.get_serializer(data=accountData)
-                if serializer.is_valid() and clubAccountRecord.is_valid():
+                if serializer.is_valid() and accountRecord.is_valid():
                     serializer.save()
-                    clubAccountRecord.save()
-            if memberId:
-                account = Account.objects.all().filter(user=memberId,club=club.id,playground=playground).first()
+                    accountRecord.save()
+            if memberId and memberUser:
+                account = Account.objects.all().filter(
+                    user=memberUser.user.id, club=club.id, playground=playground).first()
                 if account:
                     account.balance += float(sum)
                     account.save()
                 else:
-                    accountSerializer = AccountSerializer(data={'balance': sum, 'account_type': 1, 'club':club.id,'user': memberId, 'playground': playground})
+                    accountSerializer = AccountSerializer(
+                        data={'balance': sum, 'account_type': 1, 'club': club.id, 'user': memberUser.user.id, 'playground': playground})
                     if accountSerializer.is_valid():
                         accountSerializer.save()
             return Response({'msg': '成功'}, status.HTTP_200_OK)
@@ -91,14 +96,15 @@ class AccountViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         user = request.user
-        queryset = self.filter_queryset(self.get_queryset()).filter(user=user.id)
+        queryset = self.filter_queryset(
+            self.get_queryset()).filter(user=user.id)
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
         else:
             serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data, status.HTTP_200_OK)
-    
+
     def create(self, request, *args, **kwargs):
         raise exceptions.AuthenticationFailed(
             {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
@@ -133,14 +139,15 @@ class AccountRecordViewSet(viewsets.ModelViewSet):
                     serializer = self.get_serializer(queryset, many=True)
                 return Response(serializer.data, status.HTTP_200_OK)
         else:
-            queryset = self.filter_queryset(self.get_queryset()).filter(user=user.id)
+            queryset = self.filter_queryset(
+                self.get_queryset()).filter(user=user.id)
             page = self.paginate_queryset(queryset)
             if page is not None:
                 serializer = self.get_serializer(page, many=True)
             else:
                 serializer = self.get_serializer(queryset, many=True)
             return Response(serializer.data, status.HTTP_200_OK)
-        
+
     def create(self, request, *args, **kwargs):
         raise exceptions.AuthenticationFailed(
             {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
