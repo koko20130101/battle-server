@@ -3,7 +3,7 @@ from django.db.models import Q
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from battle.serializers import PlaygroundsSerializer
-from battle.models import Playgrounds, UsersClubs, ClubsPlaygrounds
+from battle.models import Playgrounds, Clubs, UsersClubs, ClubsPlaygrounds
 
 
 class PlaygroundsViewSet(viewsets.ModelViewSet):
@@ -46,13 +46,20 @@ class PlaygroundsViewSet(viewsets.ModelViewSet):
             # 从中间表中查对应的数据
             clubs_playgrounds = ClubsPlaygrounds.objects.all().filter(
                 club_id=clubId)
+
             clubsIds = list(i.playground_id for i in clubs_playgrounds)
             queryset = self.filter_queryset(
                 self.get_queryset()).filter(id__in=clubsIds)
             serializer = self.get_serializer(queryset, many=True)
-            # result = []
-            # serializer = self.get_serializer(queryset, many=True)
-            return Response(serializer.data, status.HTTP_200_OK)
+
+            result = []
+
+            for i in serializer.data:
+                # 获取用户的角色
+                i['main'] = clubs_playgrounds.filter(
+                    playground_id=i['id']).first().main
+                result.append(i)
+            return Response(result, status.HTTP_200_OK)
         else:
             return Response([], status.HTTP_200_OK)
 
@@ -104,5 +111,30 @@ class PlaygroundsViewSet(viewsets.ModelViewSet):
             else:
                 return Response({'msg': '找不到记录'}, status.HTTP_403_FORBIDDEN)
             return Response({'msg': '删除成功'}, status.HTTP_200_OK)
+        else:
+            return Response({'msg': '非法操作'}, status.HTTP_403_FORBIDDEN)
+
+    @action(methods=['POST'], detail=False, permission_classes=[permissions.IsAuthenticated])
+    def setMainPlayground(self, request, *args, **kwargs):
+        # 设置主场地
+        user = request.user
+        id = request.data.get('id')
+        clubId = request.data.get('clubId')
+        user_blub = UsersClubs.objects.filter(
+            user_id=user.id, club_id=clubId).first()
+        if user_blub and user_blub.role in [1, 2]:
+            clubs_playgrounds = ClubsPlaygrounds.objects.all().filter(
+                club_id=clubId)
+            club = Clubs.objects.get(id=clubId)
+            for i in clubs_playgrounds:
+                print(i.playground.playground_name)
+                if i.playground_id == id:
+                    i.main = True
+                    club.main_playground = i.playground.playground_name
+                    club.save()
+                else:
+                    i.main = False
+                i.save()
+            return Response({'msg': '设置成功'}, status.HTTP_200_OK)
         else:
             return Response({'msg': '非法操作'}, status.HTTP_403_FORBIDDEN)

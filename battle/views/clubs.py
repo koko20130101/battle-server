@@ -71,8 +71,10 @@ class ClubsViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         # 编辑
         user = self.request.user
+        honor = self.request.data.get('honor')
+        game_total = self.request.data.get('game_total')
         instance = self.get_object()
-        if instance.creator.id == user.id:
+        if instance.creator.id == user.id and not honor and not game_total:
             # 只有创建者可以修改
             serializer.save()
         else:

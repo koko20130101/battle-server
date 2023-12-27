@@ -58,6 +58,17 @@ class GameMembersViewSet(viewsets.ModelViewSet):
             raise exceptions.AuthenticationFailed(
                 {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
 
+    def perform_update(self, serializer):
+        # 修改参赛人员信息
+        user = self.request.user
+        instance = self.get_object()
+        user_blub = UsersClubs.objects.filter(
+            user_id=user.id, club_id=instance.club.id).first()
+        if user_blub and user_blub.role in [1, 2]:
+            serializer.save()
+        else:
+            Response({'msg': '非法操作'}, status.HTTP_503_SERVICE_UNAVAILABLE)
+
     def destroy(self, request, *args, **kwargs):
         # 退出比赛
         user = request.user

@@ -3,7 +3,7 @@ from pymysql import NULL
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from battle.serializers import GamesSerializer, AccountRecordSerializer
-from battle.models import Clubs, UsersClubs, Games, GameMembers, Account, AccountRecord
+from battle.models import Clubs, UsersClubs, Games, GameMembers, Account, ClubAccount, AccountRecord
 from datetime import datetime
 
 
@@ -158,30 +158,79 @@ class GamesViewSet(viewsets.ModelViewSet):
             # 有效结算人数 ---》 剔除接替者
             activeMembers = gameMembersInstance if instance.max_people == 0 else gameMembersInstance[
                 0:instance.max_people]
+
             gameMembersIds = list(i.user.id for i in activeMembers)
-            if len(list(set(gameMembersIds))) < 2:
-                return Response({'msg': '报名用户少于2人不能结算'}, status.HTTP_403_FORBIDDEN)
+            # 去重
+            gameMembersIds = list(set(gameMembersIds))
 
             if instance.original_price == 0 and instance.cost == 0:
                 return Response({'msg': '场租原价或费用不能为空'}, status.HTTP_403_FORBIDDEN)
             if not instance.playground and instance.price:
                 return Response({'msg': '选择球场才能使用优惠价结算'}, status.HTTP_403_FORBIDDEN)
 
+            if len(gameMembersIds) >= 5:
+                # 设置球队荣誉
+                if instance.status == 0:
+                    instance.club.honor += len(activeMembers)
+                    instance.club.save()
+
+                # 设置个人荣誉
+                for member in activeMembers.filter(user__in=gameMembersIds, remarks=None):
+                    if instance.status == 0:
+                        member.user.honor += 1
+                        member.user.save()
+
+            # 结算球队===============>
+            clubAccount = ClubAccount.objects.all().filter(
+                club=instance.club.id, playground=instance.playground.id).first()
+            clubAccountRecord = AccountRecord.objects.all().filter(user=None, club=instance.club.id,
+                                                                   playground=instance.playground.id, game=gameId).first()
+
+            if instance.price and clubAccount and (clubAccount.balance > 0 or clubAccountRecord):
+
+                if not clubAccountRecord:
+                    # 要扣除的金额
+                    clubAccountMoney = instance.price if clubAccount.balance >= instance.price else clubAccount.balance
+                    # 创建消费记录
+                    accountRecordSerializer = AccountRecordSerializer(
+                        data={'amount': clubAccountMoney, 'amount_type': 2, 'club': instance.club.id, 'playground': instance.playground.id, 'game': gameId})
+                    if accountRecordSerializer.is_valid():
+                        accountRecordSerializer.save()
+                        # 球队账户中扣除
+                        clubAccount.balance -= clubAccountMoney
+                        clubAccount.save()
+                else:
+                    differ_1 = (clubAccountRecord.amount +
+                                clubAccount.balance) - instance.price
+                    if differ_1 == 0:
+                        clubAccountRecord.amount = instance.price
+                        clubAccount.balance = 0
+                    if differ_1 < 0:
+                        clubAccountRecord.amount = clubAccountRecord.amount + clubAccount.balance
+                        clubAccount.balance = 0
+                    if differ_1 > 0:
+                        clubAccountRecord.amount = instance.price
+                        clubAccount.balance = differ_1
+                    clubAccountRecord.save()
+                    clubAccount.save()
+
+            # 结算个人
+            # 去除免费的用户
+            activeMembers = list(i for i in activeMembers if i.free == False)
             total_price_1 = instance.original_price + instance.cost
             total_price_2 = instance.price + instance.cost
-            price_1 = total_price_1/len(activeMembers)
-            price_2 = total_price_2/len(activeMembers)
+            price_1 = round(total_price_1/len(activeMembers))
+            price_2 = round(total_price_2/len(activeMembers))
             for member in activeMembers:
                 userAccount = Account.objects.all().filter(
                     user=member.user.id, club=instance.club.id, playground=instance.playground.id).first()
                 # 查询本次球赛的消费记录
                 userAccountRecord = AccountRecord.objects.all().filter(user=member.user.id, club=instance.club.id,
                                                                        playground=instance.playground.id, game=gameId).first()
+
                 # 设置了优惠价、有用户账户、（用户账户余额大于0或有消费记录）、不是多次报名
                 if instance.price and userAccount and (userAccount.balance > 0 or userAccountRecord) and not member.remarks:
 
-                    # 消费记录与结算金额的差值
-                    differ = None
                     if not userAccountRecord:
                         accountMoney = price_2 if userAccount.balance >= price_2 else userAccount.balance
                         # 创建消费记录
@@ -200,32 +249,28 @@ class GamesViewSet(viewsets.ModelViewSet):
                         userAccount.save()
                     else:
                         # 有消费记录
-                        differ = userAccountRecord.amount - price_2
-                        if userAccount.balance == 0 and differ > 0:
-                            userAccountRecord.amount = userAccountRecord.amount
-                        userAccountRecord.save()
-
-                    if differ == None:
-                        # 没有记录
-                        if userAccount.balance >= price_2:
-                            userAccount.balance -= accountMoney
-                            member.cost = 0
-
-                        elif userAccount.balance == 0:
-                            member.cost = accountMoney
-                        else:
+                        # 消费记录与结算金额的差值
+                        differ = (userAccountRecord.amount +
+                                  userAccount.balance) - price_2
+                        if differ == 0:
+                            userAccountRecord.amount = price_2
                             userAccount.balance = 0
-                            member.cost = price_2-userAccount.balance
-                    elif differ > 0:
-                        userAccount.balance += differ
-                        member.cost = accountMoney
-                    elif differ < 0:
-                        userAccount.balance -= differ
-                        member.cost = accountMoney
-                    else:
-                        member.cost = accountMoney
-                    userAccount.save()
+                            member.cost = '账户扣除' + \
+                                str(price_2)
+                        if differ < 0:
+                            userAccountRecord.amount = userAccountRecord.amount + userAccount.balance
+                            userAccount.balance = 0
+                            member.cost = '账户扣除' + \
+                                str(userAccountRecord.amount + userAccount.balance)+'元，实付' + \
+                                str(abs(differ))
+                        if differ > 0:
+                            userAccountRecord.amount = price_2
+                            userAccount.balance = differ
+                            member.cost = '账户扣除' + \
+                                str(price_2)
 
+                        userAccountRecord.save()
+                        userAccount.save()
                 else:
                     member.cost = price_1
                 member.save()

@@ -34,11 +34,15 @@ class Clubs(models.Model):
     sort = models.IntegerField(default=0)
     # 荣誉值
     honor = models.IntegerField(default=0)
+    # 完赛场次
+    game_total = models.IntegerField(default=0)
     # 加入是否需要审核
     need_apply = models.BooleanField(default=True)
     # 成员
     members = models.ManyToManyField(
         'battle.Users', related_name='clubs_set', through='battle.UsersClubs')
+    # 主场
+    main_playground = models.CharField(max_length=50, blank=True, default='')
     # 场地
     playgrounds = models.ManyToManyField(
         'battle.Playgrounds', related_name='clubs_set', through='battle.ClubsPlaygrounds')
@@ -59,63 +63,6 @@ class UsersClubs(models.Model):
 
     class Meta:
         db_table = 'bt_users_clubs'
-
-
-class Account(models.Model):
-    '''个人账户'''
-    # 余额
-    balance = models.FloatField(blank=True)
-    # 账户类型  1:充值   2：押金
-    account_type = models.IntegerField(default=1, blank=True)
-    # 对应用户
-    user = models.ForeignKey('battle.Users', on_delete=models.CASCADE)
-    # 对应俱乐部
-    club = models.ForeignKey('battle.Clubs', on_delete=models.DO_NOTHING)
-    # 对应球场
-    playground = models.ForeignKey(
-        'battle.Playgrounds', on_delete=models.DO_NOTHING)
-
-    class Meta:
-        db_table = 'bt_account'
-
-
-class AccountRecord(models.Model):
-    '''充值和消费记录'''
-    # 金额
-    amount = models.FloatField(blank=True)
-    # 动账类型  1:充值   2：消费
-    amount_type = models.IntegerField()
-    created = models.DateTimeField(auto_now_add=True)
-    # 对应比赛
-    game = models.ForeignKey(
-        'battle.Games', on_delete=models.DO_NOTHING, blank=True, null=True)
-    # 对应用户
-    user = models.ForeignKey(
-        'battle.Users', on_delete=models.CASCADE, blank=True, null=True)
-    # 对应俱乐部
-    club = models.ForeignKey('battle.Clubs', on_delete=models.DO_NOTHING)
-    # 对应球场
-    playground = models.ForeignKey(
-        'battle.Playgrounds', on_delete=models.DO_NOTHING)
-
-    class Meta:
-        db_table = 'bt_account_record'
-
-
-class ClubAccount(models.Model):
-    '''球队账户'''
-    # 余额
-    balance = models.FloatField(blank=True)
-    # 账户类型  1:充值   2：押金
-    account_type = models.IntegerField(default=1, blank=True)
-    # 对应俱乐部
-    club = models.ForeignKey('battle.Clubs', on_delete=models.CASCADE)
-    # 对应球场
-    playground = models.ForeignKey(
-        'battle.Playgrounds', on_delete=models.DO_NOTHING)
-
-    class Meta:
-        db_table = 'bt_club_account'
 
 
 class Games(models.Model):
@@ -176,6 +123,8 @@ class GameMembers(models.Model):
     group = models.IntegerField(default=0)
     # 费用
     cost = models.CharField(max_length=50, blank=True,  null=True)
+    # 是否免费
+    free = models.BooleanField(default=False)
     # 所属球队
     club = models.ForeignKey(
         'battle.Clubs', on_delete=models.CASCADE, null=True)
@@ -233,6 +182,63 @@ class ClubsPlaygrounds(models.Model):
 
     class Meta:
         db_table = 'bt_clubs_playgrounds'
+
+
+class Account(models.Model):
+    '''个人账户'''
+    # 余额
+    balance = models.FloatField(blank=True)
+    # 账户类型  1:充值   2：押金
+    account_type = models.IntegerField(default=1, blank=True)
+    # 对应用户
+    user = models.ForeignKey('battle.Users', on_delete=models.CASCADE)
+    # 对应俱乐部
+    club = models.ForeignKey('battle.Clubs', on_delete=models.DO_NOTHING)
+    # 对应球场
+    playground = models.ForeignKey(
+        'battle.Playgrounds', on_delete=models.DO_NOTHING)
+
+    class Meta:
+        db_table = 'bt_account'
+
+
+class AccountRecord(models.Model):
+    '''充值和消费记录'''
+    # 金额
+    amount = models.FloatField(blank=True)
+    # 动账类型  1:充值   2：消费
+    amount_type = models.IntegerField()
+    created = models.DateTimeField(auto_now_add=True)
+    # 对应比赛
+    game = models.ForeignKey(
+        'battle.Games', on_delete=models.DO_NOTHING, blank=True, null=True)
+    # 对应用户
+    user = models.ForeignKey(
+        'battle.Users', on_delete=models.CASCADE, blank=True, null=True)
+    # 对应俱乐部
+    club = models.ForeignKey('battle.Clubs', on_delete=models.DO_NOTHING)
+    # 对应球场
+    playground = models.ForeignKey(
+        'battle.Playgrounds', on_delete=models.DO_NOTHING)
+
+    class Meta:
+        db_table = 'bt_account_record'
+
+
+class ClubAccount(models.Model):
+    '''球队账户'''
+    # 余额
+    balance = models.FloatField(blank=True)
+    # 账户类型  1:充值   2：押金
+    account_type = models.IntegerField(default=1, blank=True)
+    # 对应俱乐部
+    club = models.ForeignKey('battle.Clubs', on_delete=models.CASCADE)
+    # 对应球场
+    playground = models.ForeignKey(
+        'battle.Playgrounds', on_delete=models.DO_NOTHING)
+
+    class Meta:
+        db_table = 'bt_club_account'
 
 
 class UploadImages(models.Model):

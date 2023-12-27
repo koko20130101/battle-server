@@ -123,15 +123,19 @@ class AccountRecordViewSet(viewsets.ModelViewSet):
     queryset = AccountRecord.objects.all()
     serializer_class = AccountRecordSerializer
     permission_classes = [permissions.IsAuthenticated]
+    # 对特定字段进行排序,指定排序的字段
+    ordering_fields = ['id']
 
     def list(self, request, *args, **kwargs):
         user = request.user
         clubId = request.GET.get('clubId')
 
         if clubId:
+            # 球队的账户明细
             instance = Clubs.objects.all().filter(id=clubId).first()
             if instance.creator == user:
-                queryset = self.filter_queryset(self.get_queryset())
+                queryset = self.filter_queryset(
+                    self.get_queryset()).filter(Q(club=clubId, amount_type=1) | Q(club=clubId, user=None))
                 page = self.paginate_queryset(queryset)
                 if page is not None:
                     serializer = self.get_serializer(page, many=True)
@@ -139,6 +143,7 @@ class AccountRecordViewSet(viewsets.ModelViewSet):
                     serializer = self.get_serializer(queryset, many=True)
                 return Response(serializer.data, status.HTTP_200_OK)
         else:
+            # 用户的账户明细
             queryset = self.filter_queryset(
                 self.get_queryset()).filter(user=user.id)
             page = self.paginate_queryset(queryset)

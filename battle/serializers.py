@@ -12,8 +12,8 @@ class ClubsSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def to_representation(self, instance):
-        usefields = ['id', 'club_name', 'short_name', 'club_logo','club_type',
-                     'sort', 'honor', 'brief', 'creator', 'need_apply', 'area', 'area_code']
+        usefields = ['id', 'club_name', 'short_name', 'club_logo', 'club_type',
+                     'sort', 'honor', 'brief', 'creator', 'need_apply', 'area', 'area_code', 'main_playground']
         data = super().to_representation(instance)
         resData = {}
         members = UsersSerializer(instance.members, many=True).data
@@ -31,7 +31,7 @@ class UsersSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def to_representation(self, instance):
-        usefields = ['id', 'nick_name', 'avatar']
+        usefields = ['id', 'nick_name', 'avatar', 'honor']
         data = super().to_representation(instance)
         resData = {}
         for field_name in data:
@@ -110,7 +110,8 @@ class GameMembersSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def to_representation(self, instance):
-        usefields = ['id', 'user', 'nickName', 'avatar', 'remarks', 'cost']
+        usefields = ['id', 'user', 'nickName',
+                     'avatar', 'remarks', 'cost', 'free']
         data = super().to_representation(instance)
         resData = {}
         for field_name in data:
@@ -165,7 +166,7 @@ class GamesSerializer(serializers.ModelSerializer):
 class ClubAccountSerializer(serializers.ModelSerializer):
     playgroundName = serializers.ReadOnlyField(
         source='playground.playground_name')
-    
+
     class Meta:
         model = ClubAccount
         fields = '__all__'
