@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from battle.serializers import GamesSerializer, AccountRecordSerializer
 from battle.models import Clubs, UsersClubs, Games, GameMembers, Account, ClubAccount, AccountRecord
 from datetime import datetime
+from math import ceil
 
 
 class GamesViewSet(viewsets.ModelViewSet):
@@ -186,9 +187,13 @@ class GamesViewSet(viewsets.ModelViewSet):
             clubAccountRecord = AccountRecord.objects.all().filter(user=None, club=instance.club.id,
                                                                    playground=instance.playground.id, game=gameId).first()
 
-            if instance.price and clubAccount and (clubAccount.balance > 0 or clubAccountRecord):
+            if  clubAccount and (clubAccount.balance > 0 or clubAccountRecord):
+                if not instance.price and clubAccountRecord:
+                    clubAccount.balance += clubAccountRecord.amount
+                    clubAccount.save()
+                    clubAccountRecord.delete()
 
-                if not clubAccountRecord:
+                if not clubAccountRecord and instance.price:
                     # 要扣除的金额
                     clubAccountMoney = instance.price if clubAccount.balance >= instance.price else clubAccount.balance
                     # 创建消费记录
@@ -199,7 +204,7 @@ class GamesViewSet(viewsets.ModelViewSet):
                         # 球队账户中扣除
                         clubAccount.balance -= clubAccountMoney
                         clubAccount.save()
-                else:
+                elif instance.price:
                     differ_1 = (clubAccountRecord.amount +
                                 clubAccount.balance) - instance.price
                     if differ_1 == 0:
@@ -219,8 +224,9 @@ class GamesViewSet(viewsets.ModelViewSet):
             activeMembers = list(i for i in activeMembers if i.free == False)
             total_price_1 = instance.original_price + instance.cost
             total_price_2 = instance.price + instance.cost
-            price_1 = round(total_price_1/len(activeMembers))
-            price_2 = round(total_price_2/len(activeMembers))
+            price_1 = ceil(total_price_1/len(activeMembers))
+            price_2 = ceil(total_price_2/len(activeMembers))
+
             for member in activeMembers:
                 userAccount = Account.objects.all().filter(
                     user=member.user.id, club=instance.club.id, playground=instance.playground.id).first()
@@ -271,6 +277,11 @@ class GamesViewSet(viewsets.ModelViewSet):
 
                         userAccountRecord.save()
                         userAccount.save()
+                elif not instance.price and userAccountRecord:
+                    userAccount.balance += userAccountRecord.amount
+                    userAccount.save()
+                    userAccountRecord.delete()
+                    member.cost = price_1
                 else:
                     member.cost = price_1
                 member.save()
