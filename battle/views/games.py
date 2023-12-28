@@ -47,7 +47,7 @@ class GamesViewSet(viewsets.ModelViewSet):
         else:
             # 非队员
             usefields = ['id', 'title', 'game_date', 'start_time', 'end_time',
-                         'site', 'min_people', 'max_people', 'brief', 'battle', 'club', 'clubName', 'tag']
+                         'site', 'min_people', 'max_people', 'brief', 'rivalName', 'rivalLogo', 'club', 'clubName', 'tag']
             resData = {'isMember': False}
             for field_name in serializer.data:
                 if field_name in usefields:
@@ -122,7 +122,6 @@ class GamesViewSet(viewsets.ModelViewSet):
         user = self.request.user
         gameId = request.data.get('gameId')
         battleId = request.data.get('battleId')
-        active = request.data.get('active')
 
         game_instance = self.get_queryset().get(id=gameId)
         battle_instance = self.get_queryset().get(id=battleId)
@@ -131,14 +130,14 @@ class GamesViewSet(viewsets.ModelViewSet):
         if game_instance.club == battle_instance.club:
             return Response({'msg': '同一支球队不能应战'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
-        if battle_instance.battle and active == '1':
+        if battle_instance.battle:
             return Response({'msg': '已经被其它球队应战，请选其它比赛'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
         if user_blub and user_blub.role in [1, 2]:
             # 只有管理员才能应战
-            game_instance.battle = battle_instance if active == '1' else None
+            game_instance.battle = battle_instance
             game_instance.save()
-            battle_instance.battle = game_instance if active == '1' else None
+            battle_instance.battle = game_instance
             battle_instance.save()
             return Response({'msg': 'ok'}, status.HTTP_200_OK)
         else:
@@ -187,7 +186,7 @@ class GamesViewSet(viewsets.ModelViewSet):
             clubAccountRecord = AccountRecord.objects.all().filter(user=None, club=instance.club.id,
                                                                    playground=instance.playground.id, game=gameId).first()
 
-            if  clubAccount and (clubAccount.balance > 0 or clubAccountRecord):
+            if clubAccount and (clubAccount.balance > 0 or clubAccountRecord):
                 if not instance.price and clubAccountRecord:
                     clubAccount.balance += clubAccountRecord.amount
                     clubAccount.save()

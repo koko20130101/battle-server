@@ -145,8 +145,9 @@ class ClubsViewSet(viewsets.ModelViewSet):
             # 查询出要称除的成员
             memberQueryset = instance.users_clubs_set.all(
             ).filter(id=memberId, club_id=clubId).first()
+            print(instance.creator.id == user.id)
 
-            if memberQueryset.role == 1 or instance.creator.id == user.id:
+            if memberQueryset.role == 1:
                 return Response({'msg': '非法操作'}, status.HTTP_403_FORBIDDEN)
             else:
                 instance.members.remove(memberQueryset.user_id)

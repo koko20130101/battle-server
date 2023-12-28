@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Users, Clubs, UsersClubs, Apply, Playgrounds, ClubsPlaygrounds, Games, GameMembers, UploadImages, ClubAccount, Account, AccountRecord
+from .models import Users, Clubs, UsersClubs, Apply, BattleApply, Playgrounds, ClubsPlaygrounds, Games, GameMembers, UploadImages, ClubAccount, Account, AccountRecord
 import time
 from datetime import datetime, timedelta
 
@@ -123,6 +123,8 @@ class GameMembersSerializer(serializers.ModelSerializer):
 class GamesSerializer(serializers.ModelSerializer):
     clubName = serializers.ReadOnlyField(source='club.club_name')
     clubLogo = serializers.ReadOnlyField(source='club.club_logo')
+    rivalName = serializers.ReadOnlyField(source='battle.club.club_name')
+    rivalLogo = serializers.ReadOnlyField(source='battle.club.club_logo')
     site = serializers.ReadOnlyField(
         source='playground.playground_name')
 
@@ -133,7 +135,7 @@ class GamesSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         path = self.context['request'].path
         usefields = ['id', 'title', 'game_date', 'start_time', 'end_time',
-                     'site', 'min_people', 'max_people', 'status', 'brief', 'battle', 'club', 'clubName', 'clubLogo', 'tag']
+                     'site', 'min_people', 'max_people', 'status', 'brief', 'rivalName', 'rivalLogo', 'club', 'clubName', 'clubLogo', 'tag']
         data = super().to_representation(instance)
         if data['start_time'] and data['end_time']:
 
@@ -160,6 +162,23 @@ class GamesSerializer(serializers.ModelSerializer):
             # 总报名人数
             data['joinTotal'] = len(members)
             resData = data
+        return resData
+
+
+class BattleApplySerializer(serializers.ModelSerializer):
+    clubName = serializers.ReadOnlyField(source='club.club_name')
+
+    class Meta:
+        model = BattleApply
+        fields = '__all__'
+
+    def to_representation(self, instance):
+        usefields = ['id', 'clubName', 'remarks']
+        data = super().to_representation(instance)
+        resData = {}
+        for field_name in data:
+            if field_name in usefields:
+                resData[field_name] = data[field_name]
         return resData
 
 

@@ -156,6 +156,27 @@ class Apply(models.Model):
         ordering = ('id',)
 
 
+class BattleApply(models.Model):
+    '''申请应战'''
+    # 申请时间
+    created = models.DateTimeField(auto_now_add=True)
+    # 备注
+    remarks = models.TextField(max_length=50, null=True)
+    # 自己
+    club = models.ForeignKey(
+        'battle.Clubs', on_delete=models.CASCADE, null=True)
+    # 自己
+    game = models.ForeignKey(
+        'battle.Games', related_name='game_set1', on_delete=models.CASCADE, null=True)
+    # 对手
+    rival = models.ForeignKey(
+        'battle.Games', related_name='game_set2', on_delete=models.CASCADE, null=True)
+
+    class Meta:
+        db_table = 'bt_battle_apply'
+        ordering = ('id',)
+
+
 class Playgrounds(models.Model):
     '''球场'''
     playground_name = models.CharField(max_length=30)
