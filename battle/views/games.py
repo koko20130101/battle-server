@@ -46,7 +46,7 @@ class GamesViewSet(viewsets.ModelViewSet):
             return Response({'isMember': True, **serializer.data}, status.HTTP_200_OK)
         else:
             # 非队员
-            usefields = ['id', 'title', 'game_date', 'start_time', 'end_time',
+            usefields = ['id', 'title', 'game_date', 'start_time', 'end_time', 'open_battle','competition',
                          'site', 'min_people', 'max_people', 'brief', 'rivalName', 'rivalLogo', 'club', 'clubName', 'tag']
             resData = {'isMember': False}
             for field_name in serializer.data:
@@ -94,11 +94,15 @@ class GamesViewSet(viewsets.ModelViewSet):
         # 编辑
         user = self.request.user
         gameStatus = self.request.data.get('status')
+        battle = self.request.data.get('battle')
         instance = self.get_object()
         user_blub = UsersClubs.objects.filter(
             user_id=user.id, club_id=instance.club).first()
 
-        if user_blub and user_blub.role in [1, 2] and gameStatus == instance.status:
+        if battle or gameStatus != instance.status:
+            return Response({'msg': '非法操作'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+
+        if user_blub and user_blub.role in [1, 2]:
             serializer.save()
         else:
             raise exceptions.AuthenticationFailed(
@@ -117,32 +121,24 @@ class GamesViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status.HTTP_200_OK)
 
     @action(methods=['POST'], detail=False, permission_classes=[permissions.IsAuthenticated])
-    def battle(self, request, *args, **kwargs):
-        # 应战
+    def cancelBattle(self, request, *args, **kwargs):
+        # 取消应战
         user = self.request.user
         gameId = request.data.get('gameId')
-        battleId = request.data.get('battleId')
-
         game_instance = self.get_queryset().get(id=gameId)
-        battle_instance = self.get_queryset().get(id=battleId)
+
         user_blub = UsersClubs.objects.filter(
             user_id=user.id, club_id=game_instance.club).first()
-        if game_instance.club == battle_instance.club:
-            return Response({'msg': '同一支球队不能应战'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
-
-        if battle_instance.battle:
-            return Response({'msg': '已经被其它球队应战，请选其它比赛'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
         if user_blub and user_blub.role in [1, 2]:
-            # 只有管理员才能应战
-            game_instance.battle = battle_instance
+            # 只有管理员才能操作
+            game_instance.battle.battle = None
+            game_instance.battle.save()
+            game_instance.battle = None
             game_instance.save()
-            battle_instance.battle = game_instance
-            battle_instance.save()
             return Response({'msg': 'ok'}, status.HTTP_200_OK)
         else:
-            raise exceptions.AuthenticationFailed(
-                {'status': status.HTTP_403_FORBIDDEN, 'msg': '您无权操作'})
+            return Response({'msg': '非法操作'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
     @action(methods=['POST'], detail=False, permission_classes=[permissions.IsAuthenticated])
     def settlement(self, request, *args, **kwargs):
@@ -169,10 +165,13 @@ class GamesViewSet(viewsets.ModelViewSet):
                 return Response({'msg': '选择球场才能使用优惠价结算'}, status.HTTP_403_FORBIDDEN)
 
             if len(gameMembersIds) >= 5:
-                # 设置球队荣誉
                 if instance.status == 0:
-                    instance.club.honor += len(activeMembers)
+                    # 设置球队荣誉
+                    instance.club.honor += ceil(len(activeMembers)/10)
                     instance.club.save()
+                    if instance.battle:
+                        # 设置信誉
+                        instance.club.credit += 1
 
                 # 设置个人荣誉
                 for member in activeMembers.filter(user__in=gameMembersIds, remarks=None):

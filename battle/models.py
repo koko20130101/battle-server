@@ -34,6 +34,8 @@ class Clubs(models.Model):
     sort = models.IntegerField(default=0)
     # 荣誉值
     honor = models.IntegerField(default=0)
+    # 信誉值
+    credit = models.IntegerField(default=0)
     # 完赛场次
     game_total = models.IntegerField(default=0)
     # 加入是否需要审核
@@ -163,9 +165,6 @@ class BattleApply(models.Model):
     # 备注
     remarks = models.TextField(max_length=50, null=True)
     # 自己
-    club = models.ForeignKey(
-        'battle.Clubs', on_delete=models.CASCADE, null=True)
-    # 自己
     game = models.ForeignKey(
         'battle.Games', related_name='game_set1', on_delete=models.CASCADE, null=True)
     # 对手
@@ -268,10 +267,47 @@ class UploadImages(models.Model):
     width = models.PositiveIntegerField(default=155)
     # 图片所属用户
     user = models.ForeignKey(
-        'battle.Users', on_delete=models.CASCADE, null=True)
+        'battle.Users', on_delete=models.CASCADE, blank=True, null=True)
     image_type = models.IntegerField(default=0)
     image_url = models.ImageField(
         upload_to=get_upload_to, height_field='height', width_field='width')
 
     class Meta:
         db_table = 'bt_upload_imges'
+
+
+class Advert(models.Model):
+    '''广告位'''
+    # 标题
+    title = models.CharField(max_length=30, blank=True)
+    # 上架状态
+    status = models.BooleanField(default=False)
+    # 所在列
+    row = models.IntegerField(default=1)
+    # 图片
+    ad_pic = models.TextField(blank=True)
+    # 图片高度
+    ad_pic_height = models.IntegerField(default=0)
+    # 广告位置类型  0：banner, 1:首页中间位置
+    ad_type = models.IntegerField(default=0)
+    # 跳转类型  0:不跳转 1：H5  2:小程序页面
+    jump_type = models.IntegerField(default=0)
+    # 跳转地址
+    jump_url = models.TextField(blank=True)
+
+
+class Message(models.Model):
+    '''消息中心'''
+    # 消息
+    message = models.TextField(blank=True)
+    # 信息类型  1：反馈给站长  2：反馈给管理员  3：系统公告
+    m_type = models.IntegerField(default=1)
+    # 回复
+    reply = models.TextField(blank=True)
+    # 创建时间
+    created = models.DateTimeField(auto_now_add=True)
+    # 回复时间
+    reply_time = models.DateTimeField(null=True)
+    # 创建者
+    owner = models.ForeignKey(
+        'battle.Users', on_delete=models.CASCADE, null=True)

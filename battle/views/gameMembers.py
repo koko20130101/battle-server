@@ -35,6 +35,7 @@ class GameMembersViewSet(viewsets.ModelViewSet):
         user = request.user
         clubId = request.data.get('clubId')
         gameId = request.data.get('gameId')
+        remarks = request.data.get('remarks')
         serializer = self.get_serializer(data=request.data)
         if not gameId:
             return Response({'msg': '比赛ID不能为空'}, status.HTTP_403_FORBIDDEN)
@@ -46,14 +47,20 @@ class GameMembersViewSet(viewsets.ModelViewSet):
         game = Games.objects.get(id=gameId)
 
         if user_blub and game.club.id == user_blub.club_id:
+            queryset = self.filter_queryset(
+                self.get_queryset()).filter(game=gameId, user=user.id).first()
+
+            if queryset and not remarks:
+                return Response({'msg': '多次报名请备注'}, status.HTTP_403_FORBIDDEN)
             if game.start_time:
                 if datetime.now().timestamp() > game.start_time.timestamp():
                     return Response({'msg': '超过比赛开始时间，不能报名'}, status.HTTP_403_FORBIDDEN)
+
             if serializer.is_valid():
                 serializer.save(club=game.club)
                 serializer.save(game=game)
                 serializer.save(user=user)
-                return Response({'msg': '创建成功'}, status.HTTP_201_CREATED)
+                return Response({'msg': '报名成功'}, status.HTTP_201_CREATED)
         else:
             raise exceptions.AuthenticationFailed(
                 {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})

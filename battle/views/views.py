@@ -1,8 +1,10 @@
 from rest_framework import viewsets, permissions, status, exceptions
+from django.db.models import Q
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from battle.serializers import ApplySerializer, UsersClubsSerializer, UploadImagesSerializer
-from battle.models import Clubs, UsersClubs, Apply,  UploadImages
+from battle.serializers import ApplySerializer, UsersClubsSerializer, UploadImagesSerializer, AdvertSerializer, MessageSerializer
+from battle.models import Clubs, UsersClubs, Apply,  UploadImages, Advert, Message
+from battle.permissions import ReadOnly
 
 
 class MembersViewSet(viewsets.ModelViewSet):
@@ -78,7 +80,7 @@ class ApplyViewSet(viewsets.ModelViewSet):
         if clubId:
             club = Clubs.objects.get(id=clubId)
             if club.need_apply:
-                
+
                 # 需要审核
                 apply = self.get_queryset().filter(
                     club=club.id, apply_user=user.id).first()
@@ -133,6 +135,7 @@ class ApplyViewSet(viewsets.ModelViewSet):
             raise exceptions.AuthenticationFailed(
                 {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
 
+
 class ImageUploadViewSet(viewsets.ModelViewSet):
     '''上传图片视图集'''
     queryset = UploadImages.objects.all()
@@ -148,3 +151,64 @@ class ImageUploadViewSet(viewsets.ModelViewSet):
 
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_200_OK, headers=headers)
+
+
+class AdvertViewSet(viewsets.ModelViewSet):
+    '''广告位视图集'''
+    queryset = Advert.objects.all()
+    serializer_class = AdvertSerializer
+    permission_classes = [ReadOnly]
+    # 指定可以过滤字段
+    filterset_fields = ['ad_type']
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(
+            self.get_queryset()).filter(status=True)
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+        else:
+            serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+
+class MessageViewSet(viewsets.ModelViewSet):
+    '''消息中心视图集'''
+    queryset = Message.objects.all()
+    serializer_class = MessageSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    # 指定可以过滤字段
+    filterset_fields = ['m_type']
+    ordering_fields = ['created']
+
+    def list(self, request, *args, **kwargs):
+        user = request.user
+        if user.is_admin:
+            queryset = self.filter_queryset(
+                self.get_queryset()).filter(Q(owner=user) | Q(m_type=3))
+        else:
+            queryset = self.filter_queryset(
+                self.get_queryset()).filter(Q(owner=user) | Q(m_type=3))
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+    def perform_create(self, serializer):
+        user = self.request.user
+        if self.request.data.get('m_type') == 3:
+            # 不能发布公告
+            raise exceptions.AuthenticationFailed(
+                {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
+        serializer.save(owner=user)
+        serializer.save()
+
+    def perform_update(self, serializer):
+        # 不能修改公告类型
+        raise exceptions.AuthenticationFailed(
+            {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
+
+    def perform_destroy(self, instance):
+        # 不能删除
+        raise exceptions.AuthenticationFailed(
+            {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})

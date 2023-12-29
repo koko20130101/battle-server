@@ -36,11 +36,11 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 CORS_ORIGIN_ALLOW_ALL = True
 
-
 # Application definition
 
 INSTALLED_APPS = [
     # 'django.contrib.admin',
+    'corsheaders',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -48,12 +48,13 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework.authtoken',
-    'battle'
+    'battle',
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
@@ -86,11 +87,22 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
 DATABASES = {
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.mysql',
+    #     'NAME': 'battleDB',
+    #     'USER': 'root',
+    #     'PASSWORD': '123456',
+    #     'HOST': '127.0.0.1',
+    #     'PROT': '3306',
+    #     'OPTIONS': {
+    #         'init_command': 'SET foreign_key_checks = 0',
+    #     }
+    # },
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'battleDB',
-        'USER': 'root',
-        'PASSWORD': '123456',
+        'USER': 'battle',
+        'PASSWORD': 'Wbl7&9$)8897',
         'HOST': '127.0.0.1',
         'PROT': '3306',
         'OPTIONS': {

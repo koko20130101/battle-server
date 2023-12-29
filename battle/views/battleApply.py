@@ -2,7 +2,7 @@ from rest_framework import viewsets, permissions, status, exceptions
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from battle.serializers import BattleApplySerializer
-from battle.models import BattleApply, Games, UsersClubs
+from battle.models import BattleApply, Games, GameMembers, UsersClubs
 
 
 class BattleApplyViewSet(viewsets.ModelViewSet):
@@ -13,25 +13,28 @@ class BattleApplyViewSet(viewsets.ModelViewSet):
     def list(self, request, *args, **kwargs):
         # 申请列表
         user = request.user
-        clubId = request.GET.get('clubId')
         gameId = request.GET.get('gameId')
 
-        if not clubId:
-            return Response({'msg': '球队ID不能为空'}, status.HTTP_503_SERVICE_UNAVAILABLE)
-
-        user_blub = UsersClubs.objects.filter(
-            user_id=user.id, club_id=clubId).first()
-        if user_blub and user_blub.role in [1, 2]:
-            queryset = self.filter_queryset(
-                self.get_queryset()).filter(club=clubId, game=gameId)
-            page = self.paginate_queryset(queryset)
-            if page is not None:
-                serializer = self.get_serializer(page, many=True)
+        if not gameId:
+            return Response({'msg': '比赛ID不能为空'}, status.HTTP_503_SERVICE_UNAVAILABLE)
+        instance = self.filter_queryset(
+            self.get_queryset()).filter(game=gameId).first()
+        if instance:
+            user_blub = UsersClubs.objects.filter(
+                user_id=user.id, club_id=instance.game.club.id).first()
+            # 验证用户
+            if user_blub and user_blub.role in [1, 2]:
+                queryset = self.filter_queryset(
+                    self.get_queryset()).filter(game=gameId)
+                page = self.paginate_queryset(queryset)
+                if page is not None:
+                    serializer = self.get_serializer(page, many=True)
+                else:
+                    serializer = self.get_serializer(queryset, many=True)
+                return Response(serializer.data)
             else:
-                serializer = self.get_serializer(queryset, many=True)
-            return Response(serializer.data)
-        else:
-            return Response({'msg': '您无权操作'}, status.HTTP_403_FORBIDDEN)
+                return Response({'msg': '您无权操作'}, status.HTTP_403_FORBIDDEN)
+        return Response([])
 
     def create(self, request, *args, **kwargs):
         # 申请
@@ -55,6 +58,12 @@ class BattleApplyViewSet(viewsets.ModelViewSet):
             user_id=user.id, club_id=battle.club).first()
 
         if user_blub and user_blub.role in [1, 2]:
+            game_members = GameMembers.objects.filter(game=gameId)
+            game_members_ids = list(set(list(i.user.id for i in game_members)))
+
+            if len(game_members_ids) < game.competition:
+                return Response({'msg': f'''您的队伍最少要{game.competition}个不同用户报名'''}, status.HTTP_503_SERVICE_UNAVAILABLE)
+
             apply = self.get_queryset().filter(
                 game=gameId, rival=battleId).first()
             if apply:
@@ -65,12 +74,11 @@ class BattleApplyViewSet(viewsets.ModelViewSet):
             applyData = {
                 'game': gameId,
                 'rival': battleId,
-                'club': game.club.id,
                 'remarks': remarks
             }
             serializer = self.get_serializer(data=applyData)
             if serializer.is_valid():
-                serializer.save()
+                # serializer.save()
                 return Response({'msg': '提交成功，请等待对方确认'}, status.HTTP_200_OK)
         else:
             return Response({'msg': '您无权操作'}, status.HTTP_403_FORBIDDEN)
@@ -88,32 +96,23 @@ class BattleApplyViewSet(viewsets.ModelViewSet):
         # 同意
         user = request.user
         applyId = request.data.get('applyId')
-        clubId = request.data.get('clubId')
-        gameId = request.data.get('gameId')
 
         if not applyId:
             return Response({'msg': '申请ID不能为空'}, status.HTTP_503_SERVICE_UNAVAILABLE)
-        if not gameId:
-            return Response({'msg': '比赛ID不能为空'}, status.HTTP_503_SERVICE_UNAVAILABLE)
-        if not clubId:
-            return Response({'msg': '球队ID不能为空'}, status.HTTP_503_SERVICE_UNAVAILABLE)
 
-        user_blub = UsersClubs.objects.filter(
-            user_id=user.id, club_id=clubId).first()
+        apply = self.get_queryset().filter(id=applyId).first()
+        if apply:
+            user_blub = UsersClubs.objects.filter(
+                user_id=user.id, club_id=apply.game.club.id).first()
 
-        if user_blub and user_blub.role in [1, 2]:
-            apply = self.get_queryset().filter(id=applyId, club=clubId, game=gameId).first()
-
-            if apply:
-                main_game = Games.objects.get(id=gameId)
-                guest_game = Games.objects.get(id=apply.rival.id)
-                main_game.battle = guest_game
-                guest_game.battle = main_game
-                main_game.save()
-                guest_game.save()
+            if user_blub and user_blub.role in [1, 2]:
+                apply.game.battle = apply.rival
+                apply.rival.battle = apply.game
+                apply.game.save()
+                apply.rival.save()
                 apply.delete()
 
-            return Response({'msg': 'ok'}, status.HTTP_200_OK)
-        else:
-            raise exceptions.AuthenticationFailed(
-                {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
+                return Response({'msg': 'ok'}, status.HTTP_200_OK)
+            else:
+                raise exceptions.AuthenticationFailed(
+                    {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})

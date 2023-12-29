@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Users, Clubs, UsersClubs, Apply, BattleApply, Playgrounds, ClubsPlaygrounds, Games, GameMembers, UploadImages, ClubAccount, Account, AccountRecord
+from .models import Users, Clubs, UsersClubs, Apply, BattleApply, Playgrounds, ClubsPlaygrounds, Games, GameMembers, UploadImages, ClubAccount, Account, AccountRecord, Advert, Message
 import time
 from datetime import datetime, timedelta
 
@@ -31,7 +31,7 @@ class UsersSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def to_representation(self, instance):
-        usefields = ['id', 'nick_name', 'avatar', 'honor']
+        usefields = ['id', 'nick_name', 'avatar', 'honor','created']
         data = super().to_representation(instance)
         resData = {}
         for field_name in data:
@@ -134,7 +134,7 @@ class GamesSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         path = self.context['request'].path
-        usefields = ['id', 'title', 'game_date', 'start_time', 'end_time',
+        usefields = ['id', 'title', 'game_date', 'start_time', 'end_time', 'open_battle', 'competition',
                      'site', 'min_people', 'max_people', 'status', 'brief', 'rivalName', 'rivalLogo', 'club', 'clubName', 'clubLogo', 'tag']
         data = super().to_representation(instance)
         if data['start_time'] and data['end_time']:
@@ -152,7 +152,7 @@ class GamesSerializer(serializers.ModelSerializer):
             data['start_time'] = time.strftime('%H:%M', t1)
             data['end_time'] = time.strftime('%H:%M', t2)
         resData = {}
-        if path == '/games':
+        if path == '/games' or path == '/games/openGames':
             # 列表输出给定字段
             for field_name in data:
                 if field_name in usefields:
@@ -166,7 +166,7 @@ class GamesSerializer(serializers.ModelSerializer):
 
 
 class BattleApplySerializer(serializers.ModelSerializer):
-    clubName = serializers.ReadOnlyField(source='club.club_name')
+    clubName = serializers.ReadOnlyField(source='rival.club.club_name')
 
     class Meta:
         model = BattleApply
@@ -218,4 +218,17 @@ class AccountRecordSerializer(serializers.ModelSerializer):
 class UploadImagesSerializer(serializers.ModelSerializer):
     class Meta:
         model = UploadImages
+        fields = '__all__'
+
+
+class AdvertSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Advert
+        fields = '__all__'
+
+
+class MessageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Message
         fields = '__all__'

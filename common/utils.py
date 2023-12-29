@@ -118,4 +118,7 @@ def get_upload_to(instance, filename):
     ext = filename.split('.')[-1]  # 获取后缀名
     filename = "%s_%d.%s" % ((datetime.datetime.now().strftime(
         '%Y%m%d%H%M%S')), random.randrange(100, 999), ext)
-    return 'battle/upload/{0}_{1}'.format(instance.user.id, filename)
+    if instance.user:
+        return 'battle/upload/{0}_{1}'.format(instance.user.id, filename)
+    else:
+        return 'battle/upload/{0}'.format(filename)
