@@ -46,6 +46,7 @@ class UsersViewSet(viewsets.ModelViewSet):
             }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
         sessionInfo = getSessionInfo(jsCode, APP_ID, SECRET)
+        print(sessionInfo)
         if not sessionInfo.get('openid'):
             return Response({'msg': 'jsCode失效'}, status.HTTP_503_SERVICE_UNAVAILABLE)
         else:
