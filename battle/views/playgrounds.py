@@ -3,7 +3,7 @@ from django.db.models import Q
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from battle.serializers import PlaygroundsSerializer
-from battle.models import Playgrounds, Clubs, UsersClubs, ClubsPlaygrounds
+from battle.models import Playgrounds, Clubs, UsersClubs, ClubsPlaygrounds, Account
 
 
 class PlaygroundsViewSet(viewsets.ModelViewSet):
@@ -106,8 +106,14 @@ class PlaygroundsViewSet(viewsets.ModelViewSet):
             playground_instance = user_blub.club.playgrounds.filter(
                 id=id).first()
             if playground_instance:
-                # 删除场地绑定关系
-                user_blub.club.playgrounds.remove(playground_instance)
+                users = UsersClubs.objects.filter(club_id=clubId)
+                account = Account.objects.all().filter(user__in=list(
+                    i.user for i in users), club=clubId, playground=id)
+                if len(list(i.balance for i in account if i.balance > 0)):
+                    return Response({'msg': '球队成员在该场地还有余额，不能删除！'}, status.HTTP_403_FORBIDDEN)
+                else:
+                    # 删除场地绑定关系
+                    user_blub.club.playgrounds.remove(playground_instance)
             else:
                 return Response({'msg': '找不到记录'}, status.HTTP_403_FORBIDDEN)
             return Response({'msg': '删除成功'}, status.HTTP_200_OK)

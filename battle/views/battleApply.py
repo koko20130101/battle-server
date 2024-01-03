@@ -78,7 +78,7 @@ class BattleApplyViewSet(viewsets.ModelViewSet):
             }
             serializer = self.get_serializer(data=applyData)
             if serializer.is_valid():
-                # serializer.save()
+                serializer.save()
                 return Response({'msg': '提交成功，请等待对方确认'}, status.HTTP_200_OK)
         else:
             return Response({'msg': '您无权操作'}, status.HTTP_403_FORBIDDEN)
@@ -107,6 +107,7 @@ class BattleApplyViewSet(viewsets.ModelViewSet):
 
             if user_blub and user_blub.role in [1, 2]:
                 apply.game.battle = apply.rival
+                apply.game.remarks = apply.remarks
                 apply.rival.battle = apply.game
                 apply.game.save()
                 apply.rival.save()

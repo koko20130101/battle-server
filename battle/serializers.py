@@ -31,7 +31,7 @@ class UsersSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def to_representation(self, instance):
-        usefields = ['id', 'nick_name', 'avatar', 'honor','created']
+        usefields = ['id', 'nick_name', 'avatar', 'honor', 'created']
         data = super().to_representation(instance)
         resData = {}
         for field_name in data:
@@ -123,6 +123,7 @@ class GameMembersSerializer(serializers.ModelSerializer):
 class GamesSerializer(serializers.ModelSerializer):
     clubName = serializers.ReadOnlyField(source='club.club_name')
     clubLogo = serializers.ReadOnlyField(source='club.club_logo')
+    gameType = serializers.ReadOnlyField(source='club.club_type')
     rivalName = serializers.ReadOnlyField(source='battle.club.club_name')
     rivalLogo = serializers.ReadOnlyField(source='battle.club.club_logo')
     site = serializers.ReadOnlyField(
@@ -134,7 +135,7 @@ class GamesSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         path = self.context['request'].path
-        usefields = ['id', 'title', 'game_date', 'start_time', 'end_time', 'open_battle', 'competition',
+        usefields = ['id', 'title', 'game_date', 'start_time', 'end_time', 'open_battle', 'competition', 'gameType', 'playground',
                      'site', 'min_people', 'max_people', 'status', 'brief', 'rivalName', 'rivalLogo', 'club', 'clubName', 'clubLogo', 'tag']
         data = super().to_representation(instance)
         if data['start_time'] and data['end_time']:

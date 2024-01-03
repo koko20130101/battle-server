@@ -19,7 +19,8 @@ class ClubAccountViewSet(viewsets.ModelViewSet):
             return Response({'msg': '球队ID不能为空'}, status.HTTP_503_SERVICE_UNAVAILABLE)
         instance = Clubs.objects.all().filter(id=clubId).first()
         if instance.creator == user:
-            queryset = self.filter_queryset(self.get_queryset())
+            queryset = self.filter_queryset(
+                self.get_queryset()).filter(club_id=clubId)
             serializer = self.get_serializer(queryset, many=True)
             return Response(serializer.data, status.HTTP_200_OK)
         else:

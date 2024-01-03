@@ -46,7 +46,7 @@ class GamesViewSet(viewsets.ModelViewSet):
             return Response({'isMember': True, **serializer.data}, status.HTTP_200_OK)
         else:
             # 非队员
-            usefields = ['id', 'title', 'game_date', 'start_time', 'end_time', 'open_battle','competition',
+            usefields = ['id', 'title', 'game_date', 'start_time', 'end_time', 'open_battle', 'competition',
                          'site', 'min_people', 'max_people', 'brief', 'rivalName', 'rivalLogo', 'club', 'clubName', 'tag']
             resData = {'isMember': False}
             for field_name in serializer.data:
@@ -132,9 +132,11 @@ class GamesViewSet(viewsets.ModelViewSet):
 
         if user_blub and user_blub.role in [1, 2]:
             # 只有管理员才能操作
+            # 设置对手的对手为空
             game_instance.battle.battle = None
             game_instance.battle.save()
             game_instance.battle = None
+            game_instance.remarks = ''
             game_instance.save()
             return Response({'msg': 'ok'}, status.HTTP_200_OK)
         else:
@@ -161,8 +163,10 @@ class GamesViewSet(viewsets.ModelViewSet):
 
             if instance.original_price == 0 and instance.cost == 0:
                 return Response({'msg': '场租原价或费用不能为空'}, status.HTTP_403_FORBIDDEN)
-            if not instance.playground and instance.price:
-                return Response({'msg': '选择球场才能使用优惠价结算'}, status.HTTP_403_FORBIDDEN)
+            if not instance.playground:
+                return Response({'msg': '场地不能为空'}, status.HTTP_403_FORBIDDEN)
+            if len(activeMembers) == 0:
+                return Response({'msg': '没有人参加的比赛不能结算'}, status.HTTP_403_FORBIDDEN)
 
             if len(gameMembersIds) >= 5:
                 if instance.status == 0:
@@ -184,7 +188,6 @@ class GamesViewSet(viewsets.ModelViewSet):
                 club=instance.club.id, playground=instance.playground.id).first()
             clubAccountRecord = AccountRecord.objects.all().filter(user=None, club=instance.club.id,
                                                                    playground=instance.playground.id, game=gameId).first()
-
             if clubAccount and (clubAccount.balance > 0 or clubAccountRecord):
                 if not instance.price and clubAccountRecord:
                     clubAccount.balance += clubAccountRecord.amount
