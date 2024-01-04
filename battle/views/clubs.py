@@ -104,25 +104,6 @@ class ClubsViewSet(viewsets.ModelViewSet):
         return Response(serializer.data, status.HTTP_200_OK)
 
     @action(methods=['POST'], detail=False, permission_classes=[permissions.IsAuthenticated])
-    def join(self, request, *args, **kwargs):
-        # 申请加入
-        clubId = request.data.get('id')
-        user = request.user
-        instance = self.get_queryset().get(id=clubId)
-        if not user.id:
-            return Response({'msg': '您还未登录', }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
-        if instance.need_apply:
-            return Response({'msg': '非法操作', }, status=status.HTTP_503_SERVICE_UNAVAILABLE)
-
-        user_blub = instance.users_clubs_set.all().values().filter(
-            user_id=user.id, club_id=clubId).first()
-        if not user_blub:
-            instance.members.add(user, through_defaults={'role': 3})
-            return Response({'msg': '加入成功'}, status.HTTP_200_OK)
-        else:
-            return Response({'msg': '你已经是成员了'}, status.HTTP_200_OK)
-
-    @action(methods=['POST'], detail=False, permission_classes=[permissions.IsAuthenticated])
     def remove(self, request, *args, **kwargs):
         # 移出
         clubId = request.data.get('clubId')
@@ -142,7 +123,7 @@ class ClubsViewSet(viewsets.ModelViewSet):
         user_blub = instance.users_clubs_set.all(
         ).filter(user_id=user.id, club_id=clubId).first()
         if memberId and user_blub.role in [1, 2]:
-            # 查询出要称除的成员
+            # 查询出要移除的成员
             memberQueryset = instance.users_clubs_set.all(
             ).filter(id=memberId, club_id=clubId).first()
             print(instance.creator.id == user.id)

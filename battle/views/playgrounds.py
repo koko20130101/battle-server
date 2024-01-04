@@ -25,12 +25,18 @@ class PlaygroundsViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         # 创建
-        raise exceptions.AuthenticationFailed(
-            {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
+        user = self.request.user
+        if user.is_superuser:
+            print(88)
+        else:
+            return Response({'msg': '非法操作'}, status.HTTP_403_FORBIDDEN)
 
     def perform_update(self, request, *args, **kwargs):
-        raise exceptions.AuthenticationFailed(
-            {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
+        user = self.request.user
+        if user.is_superuser:
+            print(88)
+        else:
+            return Response({'msg': '非法操作'}, status.HTTP_403_FORBIDDEN)
 
     def perform_destroy(self, instance):
         raise exceptions.AuthenticationFailed(

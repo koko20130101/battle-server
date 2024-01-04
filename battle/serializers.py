@@ -12,16 +12,24 @@ class ClubsSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def to_representation(self, instance):
+        path = self.context['request'].path
+        listfields = ['id', 'short_name', 'club_logo']
         usefields = ['id', 'club_name', 'short_name', 'club_logo', 'club_type',
-                     'sort', 'honor', 'brief', 'creator', 'need_apply', 'area', 'area_code', 'main_playground']
+                     'sort', 'honor', 'credit', 'brief', 'creator', 'need_apply', 'area', 'area_code', 'main_playground']
         data = super().to_representation(instance)
         resData = {}
-        members = UsersSerializer(instance.members, many=True).data
-        resData['memberTotal'] = len(members)
-
-        for field_name in data:
-            if field_name in usefields:
-                resData[field_name] = data[field_name]
+        if path == '/clubs':
+            # 列表输出
+            for field_name in data:
+                if field_name in listfields:
+                    resData[field_name] = data[field_name]
+        else:
+            # 详情页输出
+            members = UsersSerializer(instance.members, many=True).data
+            resData['memberTotal'] = len(members)
+            for field_name in data:
+                if field_name in usefields:
+                    resData[field_name] = data[field_name]
         return resData
 
 
@@ -31,7 +39,7 @@ class UsersSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def to_representation(self, instance):
-        usefields = ['id', 'nick_name', 'avatar', 'honor', 'created']
+        usefields = ['id', 'nick_name', 'avatar', 'honor', 'created','is_superuser']
         data = super().to_representation(instance)
         resData = {}
         for field_name in data:
@@ -135,12 +143,12 @@ class GamesSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         path = self.context['request'].path
+        homefields = ['id', 'game_date', 'start_time', 'end_time', 'competition', 'gameType', 'playground',
+                      'site', 'rivalName', 'rivalLogo', 'clubName', 'clubLogo']
         usefields = ['id', 'title', 'game_date', 'start_time', 'end_time', 'open_battle', 'competition', 'gameType', 'playground',
                      'site', 'min_people', 'max_people', 'status', 'brief', 'rivalName', 'rivalLogo', 'club', 'clubName', 'clubLogo', 'tag']
         data = super().to_representation(instance)
         if data['start_time'] and data['end_time']:
-
-            # data['end_time'].timestamp() < (datetime.now() - timedelta(days=1)).timestamp()
             t1 = time.strptime(
                 data['start_time'], '%Y-%m-%dT%H:%M:%S+08:00')
             t2 = time.strptime(
@@ -153,7 +161,12 @@ class GamesSerializer(serializers.ModelSerializer):
             data['start_time'] = time.strftime('%H:%M', t1)
             data['end_time'] = time.strftime('%H:%M', t2)
         resData = {}
-        if path == '/games' or path == '/games/openGames':
+        if path == '/games/openGames':
+            # 首页公开赛
+            for field_name in data:
+                if field_name in homefields:
+                    resData[field_name] = data[field_name]
+        elif path == '/games':
             # 列表输出给定字段
             for field_name in data:
                 if field_name in usefields:

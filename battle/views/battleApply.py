@@ -83,11 +83,11 @@ class BattleApplyViewSet(viewsets.ModelViewSet):
         else:
             return Response({'msg': '您无权操作'}, status.HTTP_403_FORBIDDEN)
 
-    def perform_update(self, instance):
+    def update(self, request, *args, **kwargs):
         raise exceptions.AuthenticationFailed(
             {'status': status.HTTP_403_FORBIDDEN, 'msg': '您无权操作'})
 
-    def perform_destroy(self, instance):
+    def destroy(self, request, *args, **kwargs):
         raise exceptions.AuthenticationFailed(
             {'status': status.HTTP_403_FORBIDDEN, 'msg': '您无权操作'})
 

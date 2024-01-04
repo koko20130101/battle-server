@@ -21,7 +21,7 @@ class UsersViewSet(viewsets.ModelViewSet):
         raise exceptions.AuthenticationFailed(
             {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
 
-    def perform_create(self, serializer):
+    def create(self, request, *args, **kwargs):
         # 不能创建
         raise exceptions.AuthenticationFailed(
             {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
@@ -36,7 +36,12 @@ class UsersViewSet(viewsets.ModelViewSet):
         raise exceptions.AuthenticationFailed(
             {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
 
+    def destroy(self, request, *args, **kwargs):
+        # 不能删除
+        raise exceptions.AuthenticationFailed(
+            {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
     # 登录
+
     @action(methods=['POST'], detail=False, permission_classes=[])
     def login(self, request, *args, **kwargs):
         jsCode = request.data.get('jsCode')
@@ -98,7 +103,7 @@ class UsersViewSet(viewsets.ModelViewSet):
                     return Response({'msg': serializer.errors})
         else:
             return Response({'msg': 'jsCode不能为空'}, status.HTTP_503_SERVICE_UNAVAILABLE)
-            
+
         # 生成小程序二维码
     @action(methods=['POST'], detail=False, permission_classes=[permissions.IsAuthenticated])
     def getWxacode(self, request, *args, **kwargs):
@@ -111,8 +116,8 @@ class UsersViewSet(viewsets.ModelViewSet):
         img.save(imgPath)
         return Response({'imgUrl': 'https://www.scbbsc.com/source/battle/qrcode/'+imgName})
 
-
     # 用户信息
+
     @action(methods=['POST'], detail=False, permission_classes=[permissions.IsAuthenticated, IsOwner])
     def getUserInfo(self, request, *args, **kwargs):
         instance = self.filter_queryset(

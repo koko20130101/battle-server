@@ -112,7 +112,7 @@ class GamesViewSet(viewsets.ModelViewSet):
     def openGames(self, request, *args, **kwargs):
         # 公开的比赛
         queryset = self.filter_queryset(
-            self.get_queryset()).filter(open_battle=True)
+            self.get_queryset()).filter(open_battle=True, status=0, start_time__gt=datetime.now())
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)

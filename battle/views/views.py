@@ -4,14 +4,14 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from battle.serializers import ApplySerializer, UsersClubsSerializer, UploadImagesSerializer, AdvertSerializer, MessageSerializer
 from battle.models import Clubs, UsersClubs, Apply,  UploadImages, Advert, Message
-from battle.permissions import ReadOnly
+from battle.permissions import ReadOnly, IsSuperUser
 
 
 class MembersViewSet(viewsets.ModelViewSet):
     '''球队成员视图集'''
     queryset = UsersClubs.objects.all()
     serializer_class = UsersClubsSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, ReadOnly]
     # 指定可以过滤字段
     # filterset_fields = ['playground_name']
     # 对特定字段进行排序,指定排序的字段
@@ -49,6 +49,11 @@ class MembersViewSet(viewsets.ModelViewSet):
         raise exceptions.AuthenticationFailed(
             {'status': status.HTTP_403_FORBIDDEN, 'msg': '您无权查看'})
 
+    def destroy(self, request, *args, **kwargs):
+        # 不能删除
+        raise exceptions.AuthenticationFailed(
+            {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
+
 
 class ApplyViewSet(viewsets.ModelViewSet):
     queryset = Apply.objects.all()
@@ -59,7 +64,7 @@ class ApplyViewSet(viewsets.ModelViewSet):
         # 申请列表
         clubId = request.GET.get('clubId')
         user = request.user
-        club = Clubs.objects.filter(creator=user.id, id=clubId).first()
+        club = Clubs.objects.filter(creator_id=user.id, id=clubId).first()
         if club:
             queryset = self.filter_queryset(
                 self.get_queryset()).filter(club=clubId)
@@ -79,8 +84,9 @@ class ApplyViewSet(viewsets.ModelViewSet):
 
         if clubId:
             club = Clubs.objects.get(id=clubId)
+            if club.members.filter(id=user.id).first():
+                return Response({'msg': '您已经在球队中！'}, status.HTTP_503_SERVICE_UNAVAILABLE)
             if club.need_apply:
-
                 # 需要审核
                 apply = self.get_queryset().filter(
                     club=club.id, apply_user=user.id).first()
@@ -104,9 +110,20 @@ class ApplyViewSet(viewsets.ModelViewSet):
         else:
             return Response({'msg': '请选择要加入的球队'}, status.HTTP_403_FORBIDDEN)
 
-    def perform_destroy(self, instance):
+    def update(self, request, *args, **kwargs):
+        # 不能put更新
         raise exceptions.AuthenticationFailed(
-            {'status': status.HTTP_403_FORBIDDEN, 'msg': '您无权操作'})
+            {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
+
+    def retrieve(self, request, *args, **kwargs):
+        # 不能看详情
+        raise exceptions.AuthenticationFailed(
+            {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
+
+    def perform_destroy(self, instance):
+        # 不能删除
+        raise exceptions.AuthenticationFailed(
+            {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
 
     @action(methods=['POST'], detail=False, permission_classes=[permissions.IsAuthenticated])
     def agree(self, request, *args, **kwargs):
@@ -140,7 +157,7 @@ class ImageUploadViewSet(viewsets.ModelViewSet):
     '''上传图片视图集'''
     queryset = UploadImages.objects.all()
     serializer_class = UploadImagesSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
 
     def create(self, request, *args, **kwargs):
 
@@ -157,7 +174,7 @@ class AdvertViewSet(viewsets.ModelViewSet):
     '''广告位视图集'''
     queryset = Advert.objects.all()
     serializer_class = AdvertSerializer
-    permission_classes = [ReadOnly]
+    permission_classes = [permissions.IsAuthenticated]
     # 指定可以过滤字段
     filterset_fields = ['ad_type']
 
