@@ -243,6 +243,7 @@ class AdvertSerializer(serializers.ModelSerializer):
 
 
 class MessageSerializer(serializers.ModelSerializer):
+    userName = serializers.ReadOnlyField(source='owner.nick_name')
     class Meta:
         model = Message
         fields = '__all__'

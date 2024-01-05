@@ -200,12 +200,8 @@ class MessageViewSet(viewsets.ModelViewSet):
 
     def list(self, request, *args, **kwargs):
         user = request.user
-        if user.is_admin:
-            queryset = self.filter_queryset(
-                self.get_queryset()).filter(Q(owner=user) | Q(m_type=3))
-        else:
-            queryset = self.filter_queryset(
-                self.get_queryset()).filter(Q(owner=user) | Q(m_type=3))
+        queryset = self.filter_queryset(
+            self.get_queryset()).filter(Q(owner=user) | Q(m_type=3))
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
@@ -213,12 +209,7 @@ class MessageViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         user = self.request.user
-        if self.request.data.get('m_type') == 3:
-            # 不能发布公告
-            raise exceptions.AuthenticationFailed(
-                {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
         serializer.save(owner=user)
-        serializer.save()
 
     def perform_update(self, serializer):
         # 不能修改公告类型

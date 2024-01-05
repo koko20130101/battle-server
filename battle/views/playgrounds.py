@@ -11,11 +11,13 @@ class PlaygroundsViewSet(viewsets.ModelViewSet):
     queryset = Playgrounds.objects.all()
     serializer_class = PlaygroundsSerializer
     permission_classes = [permissions.IsAuthenticated]
+    ordering_fields = ['id']
     # 指定可以过滤字段
     filterset_fields = ['playground_name', 'area']
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
@@ -27,14 +29,14 @@ class PlaygroundsViewSet(viewsets.ModelViewSet):
         # 创建
         user = self.request.user
         if user.is_superuser:
-            print(88)
+            serializer.save()
         else:
             return Response({'msg': '非法操作'}, status.HTTP_403_FORBIDDEN)
 
-    def perform_update(self, request, *args, **kwargs):
+    def perform_update(self, serializer):
         user = self.request.user
         if user.is_superuser:
-            print(88)
+            serializer.save()
         else:
             return Response({'msg': '非法操作'}, status.HTTP_403_FORBIDDEN)
 
