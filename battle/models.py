@@ -295,6 +295,9 @@ class Advert(models.Model):
     # 跳转地址
     jump_url = models.TextField(blank=True)
 
+    class Meta:
+        db_table = 'bt_advert'
+
 
 class Message(models.Model):
     '''消息中心'''
@@ -311,3 +314,6 @@ class Message(models.Model):
     # 创建者
     owner = models.ForeignKey(
         'battle.Users', on_delete=models.CASCADE, null=True)
+    
+    class Meta:
+        db_table = 'bt_messages'

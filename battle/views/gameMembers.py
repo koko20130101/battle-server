@@ -96,6 +96,9 @@ class GameMembersViewSet(viewsets.ModelViewSet):
                     else:
                         instance.delete()
                         return Response({'msg': '取消成功'}, status.HTTP_204_NO_CONTENT)
+                else:
+                    instance.delete()
+                    return Response({'msg': '取消成功'}, status.HTTP_204_NO_CONTENT)
         else:
             raise exceptions.AuthenticationFailed(
                 {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})

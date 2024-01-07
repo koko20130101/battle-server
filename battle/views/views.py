@@ -174,7 +174,7 @@ class AdvertViewSet(viewsets.ModelViewSet):
     '''广告位视图集'''
     queryset = Advert.objects.all()
     serializer_class = AdvertSerializer
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
     # 指定可以过滤字段
     filterset_fields = ['ad_type']
 

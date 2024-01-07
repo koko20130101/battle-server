@@ -143,7 +143,7 @@ class GamesSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         path = self.context['request'].path
-        homefields = ['id', 'game_date', 'start_time', 'end_time', 'competition', 'gameType', 'playground',
+        homefields = ['id', 'game_date', 'start_time', 'end_time', 'competition', 'gameType', 'playground','min_people','tag',
                       'site', 'rivalName', 'rivalLogo', 'clubName', 'clubLogo']
         usefields = ['id', 'title', 'game_date', 'start_time', 'end_time', 'open_battle', 'competition', 'gameType', 'playground',
                      'site', 'min_people', 'max_people', 'status', 'brief', 'rivalName', 'rivalLogo', 'club', 'clubName', 'clubLogo', 'tag']
