@@ -40,6 +40,8 @@ class Clubs(models.Model):
     game_total = models.IntegerField(default=0)
     # 加入是否需要审核
     need_apply = models.BooleanField(default=True)
+    # 热门
+    hot = models.BooleanField(default=False)
     # 成员
     members = models.ManyToManyField(
         'battle.Users', related_name='clubs_set', through='battle.UsersClubs')

@@ -14,7 +14,7 @@ class ClubsViewSet(viewsets.ModelViewSet):
     ordering_fields = ['id', 'honor']
 
     def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
+        queryset = self.filter_queryset(self.get_queryset()).filter(hot=True)
         page = self.paginate_queryset(queryset)
         if page is not None:
             serializer = self.get_serializer(page, many=True)
@@ -71,10 +71,9 @@ class ClubsViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         # 编辑
         user = self.request.user
-        honor = self.request.data.get('honor')
-        game_total = self.request.data.get('game_total')
         instance = self.get_object()
-        if instance.creator.id == user.id and not honor and not game_total:
+
+        if instance.creator.id == user.id and not set(['honor','game_total','credit','hot','creator']) & set(self.request.data.keys()):
             # 只有创建者可以修改
             serializer.save()
         else:
