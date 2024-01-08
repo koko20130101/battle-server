@@ -203,9 +203,15 @@ class MessageViewSet(viewsets.ModelViewSet):
         queryset = self.filter_queryset(
             self.get_queryset()).filter(Q(owner=user) | Q(m_type=3))
         page = self.paginate_queryset(queryset)
+
         if page is not None:
             serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
+            result = serializer.data
+            for i in page:
+                if i.readed == False:
+                    i.readed = True
+                    i.save()
+            return self.get_paginated_response(result)
 
     def perform_create(self, serializer):
         user = self.request.user
@@ -220,3 +226,12 @@ class MessageViewSet(viewsets.ModelViewSet):
         # 不能删除
         raise exceptions.AuthenticationFailed(
             {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
+
+    @action(methods=['POST'], detail=False, permission_classes=[permissions.IsAuthenticated])
+    def unread(self, request, *args, **kwargs):
+        # 未读消息
+        user = request.user
+        queryset = self.filter_queryset(
+            self.get_queryset()).filter(Q(owner=user, readed=False) | Q(m_type=3, readed=False))
+        serializer = self.get_serializer(queryset, many=True)
+        return Response({'total': len(serializer.data)}, status.HTTP_200_OK)

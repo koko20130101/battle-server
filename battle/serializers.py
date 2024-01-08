@@ -14,7 +14,7 @@ class ClubsSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         path = self.context['request'].path
         listfields = ['id', 'short_name', 'club_logo']
-        usefields = ['id', 'club_name', 'short_name', 'club_logo', 'club_type',
+        usefields = ['id', 'club_name', 'short_name', 'club_logo', 'club_type', 'hot',
                      'sort', 'honor', 'credit', 'brief', 'creator', 'need_apply', 'area', 'area_code', 'main_playground']
         data = super().to_representation(instance)
         resData = {}
@@ -39,7 +39,8 @@ class UsersSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def to_representation(self, instance):
-        usefields = ['id', 'nick_name', 'avatar', 'honor', 'created','is_superuser']
+        usefields = ['id', 'nick_name', 'avatar',
+                     'honor', 'created', 'is_superuser']
         data = super().to_representation(instance)
         resData = {}
         for field_name in data:
@@ -143,7 +144,7 @@ class GamesSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         path = self.context['request'].path
-        homefields = ['id', 'game_date', 'start_time', 'end_time', 'competition', 'gameType', 'playground','min_people','tag',
+        homefields = ['id', 'game_date', 'start_time', 'end_time', 'competition', 'gameType', 'playground', 'min_people', 'tag',
                       'site', 'rivalName', 'rivalLogo', 'clubName', 'clubLogo']
         usefields = ['id', 'title', 'game_date', 'start_time', 'end_time', 'open_battle', 'competition', 'gameType', 'playground',
                      'site', 'min_people', 'max_people', 'status', 'brief', 'rivalName', 'rivalLogo', 'club', 'clubName', 'clubLogo', 'tag']
@@ -244,6 +245,7 @@ class AdvertSerializer(serializers.ModelSerializer):
 
 class MessageSerializer(serializers.ModelSerializer):
     userName = serializers.ReadOnlyField(source='owner.nick_name')
+
     class Meta:
         model = Message
         fields = '__all__'

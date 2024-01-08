@@ -1,8 +1,8 @@
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from battle.serializers import AdvertSerializer, UploadImagesSerializer, MessageSerializer, UsersSerializer
-from battle.models import UploadImages, Message, Advert, Users
+from battle.serializers import AdvertSerializer, UploadImagesSerializer, MessageSerializer, UsersSerializer, ClubsSerializer
+from battle.models import UploadImages, Message, Advert, Users, Clubs
 from battle.permissions import IsSuperUser
 import datetime
 # django自带的验证机制
@@ -113,3 +113,36 @@ class AdminMessageViewSet(viewsets.ModelViewSet):
 
     def perform_update(self, serializer):
         serializer.save(reply_time=datetime.datetime.now())
+
+
+class AdminClubsViewSet(viewsets.ModelViewSet):
+    '''球队管理'''
+    queryset = Clubs.objects.all()
+    serializer_class = ClubsSerializer
+    permission_classes = [permissions.IsAuthenticated, IsSuperUser]
+    # 指定可以过滤字段
+    filterset_fields = ['club_name', 'hot']
+
+    def create(self, request, *args, **kwargs):
+        return Response({'msg': '无权操作'},
+                        status.HTTP_403_FORBIDDEN)
+
+    def update(self, request, *args, **kwargs):
+        return Response({'msg': '无权操作'},
+                        status.HTTP_403_FORBIDDEN)
+
+    def destroy(self, request, *args, **kwargs):
+        return Response({'msg': '无权操作'},
+                        status.HTTP_403_FORBIDDEN)
+
+    @action(methods=['POST'], detail=False, permission_classes=[permissions.IsAuthenticated, IsSuperUser])
+    def setHot(self, request, *args, **kwargs):
+        # 设置热门
+        id = request.data.get('id')
+        hot = request.data.get('hot')
+        instance = self.filter_queryset(
+            self.get_queryset()).filter(id=id).first()
+        if instance:
+            instance.hot = hot
+            instance.save()
+            return Response({'msg': 'ok'}, status.HTTP_200_OK)

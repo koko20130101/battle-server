@@ -73,7 +73,7 @@ class ClubsViewSet(viewsets.ModelViewSet):
         user = self.request.user
         instance = self.get_object()
 
-        if instance.creator.id == user.id and not set(['honor','game_total','credit','hot','creator']) & set(self.request.data.keys()):
+        if instance.creator.id == user.id and not set(['honor', 'game_total', 'credit', 'hot', 'creator']) & set(self.request.data.keys()):
             # 只有创建者可以修改
             serializer.save()
         else:

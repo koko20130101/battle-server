@@ -313,9 +313,11 @@ class Message(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     # 回复时间
     reply_time = models.DateTimeField(null=True)
+    # 是否已读
+    readed = models.BooleanField(default=False)
     # 创建者
     owner = models.ForeignKey(
         'battle.Users', on_delete=models.CASCADE, null=True)
-    
+
     class Meta:
         db_table = 'bt_messages'
