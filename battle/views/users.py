@@ -114,7 +114,7 @@ class UsersViewSet(viewsets.ModelViewSet):
         imgName = username[-8:-1]+'.jpg'
         imgPath = '/root/assets/battle/qrcode/'+imgName
         img.save(imgPath)
-        return Response({'imgUrl': 'https://www.scbbsc.com/source/battle/qrcode/'+imgName})
+        return Response({'imgUrl': 'https://www.scbbsc.com/resource/battle/qrcode/'+imgName})
 
     # 用户信息
 
@@ -144,3 +144,8 @@ class UsersViewSet(viewsets.ModelViewSet):
             return Response({
                 'msg': '您还未注册',
             }, status=status.HTTP_416_REQUESTED_RANGE_NOT_SATISFIABLE)
+        
+    # 设置账户开关
+    @action(methods=['POST'], detail=False, permission_classes=[permissions.IsAuthenticated])
+    def accountSwitch(self, request, *args, **kwargs):
+        return Response({'open': 1}, status.HTTP_200_OK)
