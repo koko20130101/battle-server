@@ -130,10 +130,10 @@ class GameMembersSerializer(serializers.ModelSerializer):
 
 
 class GamesSerializer(serializers.ModelSerializer):
-    clubName = serializers.ReadOnlyField(source='club.club_name')
+    clubName = serializers.ReadOnlyField(source='club.short_name')
     clubLogo = serializers.ReadOnlyField(source='club.club_logo')
     gameType = serializers.ReadOnlyField(source='club.club_type')
-    rivalName = serializers.ReadOnlyField(source='battle.club.club_name')
+    rivalName = serializers.ReadOnlyField(source='battle.club.short_name')
     rivalLogo = serializers.ReadOnlyField(source='battle.club.club_logo')
     site = serializers.ReadOnlyField(
         source='playground.playground_name')
