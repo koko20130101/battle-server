@@ -10,11 +10,21 @@ class Users(AbstractUser):
     real_name = models.CharField(max_length=15, blank=True)
     nick_name = models.CharField(max_length=50, blank=True)
     avatar = models.URLField(blank=True)
+
+    class Meta:
+        db_table = 'bt_users'
+
+class UsersHonor(models.Model):
+    '''用户荣誉'''
+    user = models.ForeignKey(
+        'battle.Users', related_name='users_honor_set', on_delete=models.CASCADE)
+    club = models.ForeignKey(
+        'battle.Clubs', related_name='users_honor_set', on_delete=models.CASCADE)
     # 荣誉值
     honor = models.IntegerField(default=0, blank=True)
 
     class Meta:
-        db_table = 'bt_users'
+        db_table = 'bt_users_honor'
 
 
 class Clubs(models.Model):

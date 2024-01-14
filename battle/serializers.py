@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Users, Clubs, UsersClubs, Apply, BattleApply, Playgrounds, ClubsPlaygrounds, Games, GameMembers, UploadImages, ClubAccount, Account, AccountRecord, Advert, Message
+from .models import Users, UsersHonor, Clubs, UsersClubs, Apply, BattleApply, Playgrounds, ClubsPlaygrounds, Games, GameMembers, UploadImages, ClubAccount, Account, AccountRecord, Advert, Message
 import time
 from datetime import datetime, timedelta
 
@@ -203,6 +203,11 @@ class ClubAccountSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = ClubAccount
+        fields = '__all__'
+
+class UsersHonorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UsersHonor
         fields = '__all__'
 
 

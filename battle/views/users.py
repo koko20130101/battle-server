@@ -3,7 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from battle.serializers import UsersSerializer
-from battle.models import Users
+from battle.models import Users,UsersHonor
 from battle.permissions import IsOwner
 from config.settings import APP_ID, SECRET
 from common.utils import getSessionInfo, getAccessToken, getUnlimited
@@ -123,8 +123,11 @@ class UsersViewSet(viewsets.ModelViewSet):
         instance = self.filter_queryset(
             self.get_queryset()).filter(id=request.user.id).first()
         if instance:
+            # 荣誉值
+            honors = UsersHonor.objects.all().filter(user=instance.id)
+            honorTotal = sum(list(i.honor for i in honors))
             serializer = self.get_serializer(instance)
-            return Response(serializer.data)
+            return Response({'honor':honorTotal,**serializer.data})
         else:
             return Response({
                 'msg': '您还未注册',

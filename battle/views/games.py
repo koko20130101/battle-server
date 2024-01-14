@@ -2,8 +2,8 @@ from rest_framework import viewsets, permissions, status, exceptions
 from pymysql import NULL
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from battle.serializers import GamesSerializer, AccountRecordSerializer
-from battle.models import Clubs, UsersClubs, Games, GameMembers, Account, ClubAccount, AccountRecord
+from battle.serializers import GamesSerializer, AccountRecordSerializer,UsersHonorSerializer
+from battle.models import Clubs, UsersClubs,UsersHonor, Games, GameMembers, Account, ClubAccount, AccountRecord
 from datetime import datetime
 from math import ceil
 
@@ -168,20 +168,7 @@ class GamesViewSet(viewsets.ModelViewSet):
             if len(activeMembers) == 0:
                 return Response({'msg': '没有人参加的比赛不能结算'}, status.HTTP_403_FORBIDDEN)
 
-            if len(gameMembersIds) >= 5:
-                if instance.status == 0:
-                    # 设置球队荣誉
-                    instance.club.honor += ceil(len(activeMembers)/10)
-                    instance.club.save()
-                    if instance.battle:
-                        # 设置信誉
-                        instance.club.credit += 1
-
-                # 设置个人荣誉
-                for member in activeMembers.filter(user__in=gameMembersIds, remarks=None):
-                    if instance.status == 0:
-                        member.user.honor += 1
-                        member.user.save()
+            
 
             # 结算球队===============>
             clubAccount = ClubAccount.objects.all().filter(
@@ -286,6 +273,30 @@ class GamesViewSet(viewsets.ModelViewSet):
                 else:
                     member.cost = price_1
                 member.save()
+            
+            if len(gameMembersIds) >= 5:
+                if instance.status == 0:
+                    # 设置球队荣誉
+                    instance.club.honor += ceil(len(activeMembers)/10)
+                    if instance.battle:
+                        # 设置信誉
+                        instance.club.credit += 1
+
+                # 设置个人荣誉
+                for member in gameMembersInstance.filter(user__in=gameMembersIds, remarks=None):
+                    if instance.status == 0:
+                        userHonor = UsersHonor.objects.filter(user=member.user,club=instance.club).first()
+                        if userHonor:
+                            userHonor.honor += 1
+                            userHonor.save()
+                        else:
+                            # 创建荣誉
+                            usersHonorSerializer = UsersHonorSerializer(
+                                data={'user': member.user.id, 'club': instance.club.id, 'honor': 1})
+                            if usersHonorSerializer.is_valid():
+                                usersHonorSerializer.save()
+
             instance.status = 1
+            instance.club.save()
             instance.save()
             return Response({'msg': 'ok'}, status.HTTP_200_OK)
