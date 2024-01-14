@@ -292,7 +292,7 @@ class GamesViewSet(viewsets.ModelViewSet):
                         else:
                             # 创建荣誉
                             usersHonorSerializer = UsersHonorSerializer(
-                                data={'user': member.user.id, 'club': instance.club.id, 'honor': 1})
+                                data={'user': member.user.id, 'club': instance.club.id, 'honor': 1,'honor': 0,'goal':0,'mvp':0})
                             if usersHonorSerializer.is_valid():
                                 usersHonorSerializer.save()
 

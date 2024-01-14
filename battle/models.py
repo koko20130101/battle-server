@@ -22,6 +22,12 @@ class UsersHonor(models.Model):
         'battle.Clubs', related_name='users_honor_set', on_delete=models.CASCADE)
     # 荣誉值
     honor = models.IntegerField(default=0, blank=True)
+    # 进球数
+    goal = models.IntegerField(default=0, blank=True)
+    # mvp次数
+    mvp = models.IntegerField(default=0, blank=True)
+    # 贡献
+    contribute = models.IntegerField(default=0, blank=True)
 
     class Meta:
         db_table = 'bt_users_honor'
@@ -114,6 +120,10 @@ class Games(models.Model):
     brief = models.TextField(blank=True)
     # 分组
     group = models.IntegerField(default=1)
+    # 自定义约战对象
+    battle_name = models.CharField(max_length=20, null=True, blank=True)
+    # 自定义约战对象进球数
+    battle_goal = models.IntegerField(default=0, null=True, blank=True,)
     # 约战对象
     battle = models.OneToOneField(
         'battle.Games', on_delete=models.DO_NOTHING, null=True)
@@ -134,6 +144,8 @@ class GameMembers(models.Model):
     remarks = models.CharField(max_length=30, blank=True,  null=True)
     # 进球数
     goal = models.IntegerField(default=0)
+    # 最佳
+    mvp = models.BooleanField(default=False)
     group = models.IntegerField(default=0)
     # 费用
     cost = models.CharField(max_length=50, blank=True,  null=True)

@@ -121,11 +121,11 @@ class ClubsViewSet(viewsets.ModelViewSet):
 
         user_blub = instance.users_clubs_set.all(
         ).filter(user_id=user.id, club_id=clubId).first()
-        if memberId and user_blub.role in [1, 2]:
+        if memberId and user_blub.role == 1:
+            # 只有队长才有权限删除
             # 查询出要移除的成员
             memberQueryset = instance.users_clubs_set.all(
             ).filter(id=memberId, club_id=clubId).first()
-            print(instance.creator.id == user.id)
 
             if memberQueryset.role == 1:
                 return Response({'msg': '非法操作'}, status.HTTP_403_FORBIDDEN)

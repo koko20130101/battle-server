@@ -1,7 +1,7 @@
 from rest_framework import viewsets, permissions, status, exceptions
 from rest_framework.response import Response
-from battle.serializers import GameMembersSerializer
-from battle.models import UsersClubs, Games, GameMembers
+from battle.serializers import GameMembersSerializer,UsersHonorSerializer
+from battle.models import UsersClubs, Games, GameMembers,UsersHonor
 from config.settings import APP_ID, SECRET
 from datetime import datetime, timedelta
 
@@ -68,10 +68,31 @@ class GameMembersViewSet(viewsets.ModelViewSet):
     def perform_update(self, serializer):
         # 修改参赛人员信息
         user = self.request.user
+        goal = self.request.data.get('goal')
+        mvp = self.request.data.get('mvp')
         instance = self.get_object()
         user_blub = UsersClubs.objects.filter(
             user_id=user.id, club_id=instance.club.id).first()
+        dif = goal - instance.goal
         if user_blub and user_blub.role in [1, 2]:
+            userHonor = UsersHonor.objects.filter(user=instance.user,club=instance.club).first()
+            if not userHonor:
+                # 创建荣誉
+                userHonor = UsersHonorSerializer(
+                                data={'user': instance.user.id, 'club': user_blub.club.id, 'honor': 0,'goal':0,'mvp':0})
+                if userHonor.is_valid():
+                    userHonor.save()
+            if type(goal)== int:
+                userHonor.goal += dif
+                userHonor.save()
+            if mvp == True and mvp != instance.mvp:
+                userHonor.mvp += 1
+                userHonor.save()
+            if mvp == False and mvp != instance.mvp and userHonor.mvp > 0:
+                userHonor.mvp -= 1
+                userHonor.save()
+                
+
             serializer.save()
         else:
             Response({'msg': '非法操作'}, status.HTTP_503_SERVICE_UNAVAILABLE)
@@ -84,9 +105,14 @@ class GameMembersViewSet(viewsets.ModelViewSet):
             user_id=user.id, club_id=instance.club).first()
 
         if user_blub:
+            userHonor = UsersHonor.objects.filter(user=instance.user,club=instance.club).first()
             if instance.game.status == 1:
                 return Response({'msg': '比赛已结束，不能取消'}, status.HTTP_403_FORBIDDEN)
             if user_blub.role in [1, 2]:
+                if userHonor:
+                    userHonor.mvp -= 1 if instance.mvp else 0
+                    userHonor.goal -= instance.goal
+                    userHonor.save()
                 instance.delete()
                 return Response({'msg': '取消成功'}, status.HTTP_204_NO_CONTENT)
             if instance.user == user:
@@ -94,9 +120,17 @@ class GameMembersViewSet(viewsets.ModelViewSet):
                     if datetime.now().timestamp() > (instance.game.start_time - timedelta(hours=instance.game.cancel_time)).timestamp():
                         return Response({'msg': '超过取消时间，请联系管理员'}, status.HTTP_403_FORBIDDEN)
                     else:
+                        if userHonor:
+                            userHonor.mvp -= 1 if instance.mvp else 0
+                            userHonor.goal -= instance.goal
+                            userHonor.save()
                         instance.delete()
                         return Response({'msg': '取消成功'}, status.HTTP_204_NO_CONTENT)
                 else:
+                    if userHonor:
+                        userHonor.mvp -= 1 if instance.mvp else 0
+                        userHonor.goal -= instance.goal
+                        userHonor.save()
                     instance.delete()
                     return Response({'msg': '取消成功'}, status.HTTP_204_NO_CONTENT)
         else:

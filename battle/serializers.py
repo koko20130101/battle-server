@@ -120,7 +120,7 @@ class GameMembersSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         usefields = ['id', 'user', 'nickName',
-                     'avatar', 'remarks', 'cost', 'free']
+                     'avatar', 'remarks', 'cost', 'free','goal','mvp']
         data = super().to_representation(instance)
         resData = {}
         for field_name in data:
