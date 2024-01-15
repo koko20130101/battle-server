@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from common.utils import get_upload_to
+from datetime import datetime
 
 
 class Users(AbstractUser):
@@ -16,6 +17,7 @@ class Users(AbstractUser):
 
 class UsersHonor(models.Model):
     '''用户荣誉'''
+    year = models.CharField(max_length=4, default=datetime.now().strftime('%Y'))
     user = models.ForeignKey(
         'battle.Users', related_name='users_honor_set', on_delete=models.CASCADE)
     club = models.ForeignKey(

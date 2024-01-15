@@ -156,9 +156,13 @@ class GamesViewSet(viewsets.ModelViewSet):
             activeMembers = gameMembersInstance if instance.max_people == 0 else gameMembersInstance[
                 0:instance.max_people]
 
-            gameMembersIds = list(i.user.id for i in activeMembers)
+            # gameMembersIds = list(i.user.id for i in activeMembers)
+            # 本人参加
+            gameMembersIdsOnly = list(i.user.id for i in activeMembers if i.remarks == None)
+            # 有备注的ID
+            gameMembersIdsHasRemarks = list(i.user.id for i in activeMembers if i.remarks != None)
             # 去重
-            gameMembersIdsOnly = list(set(gameMembersIds))
+            gameMembersIdsHasRemarksOnly = list(set(gameMembersIdsHasRemarks))
 
             if instance.original_price == 0 and instance.cost == 0:
                 return Response({'msg': '场租原价或费用不能为空'}, status.HTTP_403_FORBIDDEN)
@@ -282,18 +286,30 @@ class GamesViewSet(viewsets.ModelViewSet):
                         instance.club.credit += 1
 
                 # 设置个人荣誉
-                for member in gameMembersInstance.filter(user__in=gameMembersIdsOnly, remarks=None):
+                for user_id in gameMembersIdsOnly:
                     if instance.status == 0:
-                        userHonor = UsersHonor.objects.filter(user=member.user,club=instance.club).first()
-                        contribute = gameMembersIds.count(member.user.id)
+                        userHonor = UsersHonor.objects.filter(user_id=user_id,club=instance.club).first()
                         if userHonor:
                             userHonor.honor += 1
-                            userHonor.contribute += contribute - 1
                             userHonor.save()
                         else:
-                            # 创建荣誉
+                            # 创建记录
                             usersHonorSerializer = UsersHonorSerializer(
-                                data={'user': member.user.id, 'club': instance.club.id, 'honor': 1,'contribute': contribute-1,'goal':0,'mvp':0})
+                                data={'user':user_id, 'club': instance.club.id, 'honor': 1,'goal':0,'mvp':0})
+                            if usersHonorSerializer.is_valid():
+                                usersHonorSerializer.save()
+                # 设置贡献
+                for user_id in gameMembersIdsHasRemarksOnly:
+                    if instance.status == 0:
+                        userHonor = UsersHonor.objects.filter(user_id=user_id,club=instance.club).first()
+                        contribute = gameMembersIdsHasRemarks.count(user_id)
+                        if userHonor:
+                            userHonor.contribute += contribute
+                            userHonor.save()
+                        else:
+                            # 创建记录
+                            usersHonorSerializer = UsersHonorSerializer(
+                                data={'user': user_id, 'club': instance.club.id,'contribute': contribute,'goal':0,'mvp':0})
                             if usersHonorSerializer.is_valid():
                                 usersHonorSerializer.save()
 

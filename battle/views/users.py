@@ -124,7 +124,7 @@ class UsersViewSet(viewsets.ModelViewSet):
             self.get_queryset()).filter(id=request.user.id).first()
         if instance:
             # 荣誉值
-            honors = UsersHonor.objects.all().filter(user=instance.id)
+            honors = UsersHonor.objects.all().filter(user_id=instance.id)
             honor = 0
             contribute = 0
             goal = 0
