@@ -125,9 +125,17 @@ class UsersViewSet(viewsets.ModelViewSet):
         if instance:
             # 荣誉值
             honors = UsersHonor.objects.all().filter(user=instance.id)
-            honorTotal = sum(list(i.honor for i in honors))
+            honor = 0
+            contribute = 0
+            goal = 0
+            mvp = 0
+            for i in honors:
+                honor += i.honor
+                contribute += i.contribute
+                goal += i.goal
+                mvp += i.mvp
             serializer = self.get_serializer(instance)
-            return Response({'honor':honorTotal,**serializer.data})
+            return Response({'honor':honor,'contribute':contribute,'goal':goal,'mvp':mvp,**serializer.data})
         else:
             return Response({
                 'msg': '您还未注册',
@@ -151,4 +159,4 @@ class UsersViewSet(viewsets.ModelViewSet):
     # 设置账户开关
     @action(methods=['POST'], detail=False, permission_classes=[permissions.IsAuthenticated])
     def accountSwitch(self, request, *args, **kwargs):
-        return Response({'open': 1}, status.HTTP_200_OK)
+        return Response({'open': 0}, status.HTTP_200_OK)

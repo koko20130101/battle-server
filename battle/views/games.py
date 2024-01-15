@@ -98,7 +98,6 @@ class GamesViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         user_blub = UsersClubs.objects.filter(
             user_id=user.id, club_id=instance.club).first()
-
         if battle or gameStatus != instance.status:
             return Response({'msg': '非法操作'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
@@ -159,7 +158,7 @@ class GamesViewSet(viewsets.ModelViewSet):
 
             gameMembersIds = list(i.user.id for i in activeMembers)
             # 去重
-            gameMembersIds = list(set(gameMembersIds))
+            gameMembersIdsOnly = list(set(gameMembersIds))
 
             if instance.original_price == 0 and instance.cost == 0:
                 return Response({'msg': '场租原价或费用不能为空'}, status.HTTP_403_FORBIDDEN)
@@ -274,7 +273,7 @@ class GamesViewSet(viewsets.ModelViewSet):
                     member.cost = price_1
                 member.save()
             
-            if len(gameMembersIds) >= 5:
+            if len(gameMembersIdsOnly) >= 5:
                 if instance.status == 0:
                     # 设置球队荣誉
                     instance.club.honor += ceil(len(activeMembers)/10)
@@ -283,16 +282,18 @@ class GamesViewSet(viewsets.ModelViewSet):
                         instance.club.credit += 1
 
                 # 设置个人荣誉
-                for member in gameMembersInstance.filter(user__in=gameMembersIds, remarks=None):
+                for member in gameMembersInstance.filter(user__in=gameMembersIdsOnly, remarks=None):
                     if instance.status == 0:
                         userHonor = UsersHonor.objects.filter(user=member.user,club=instance.club).first()
+                        contribute = gameMembersIds.count(member.user.id)
                         if userHonor:
                             userHonor.honor += 1
+                            userHonor.contribute += contribute - 1
                             userHonor.save()
                         else:
                             # 创建荣誉
                             usersHonorSerializer = UsersHonorSerializer(
-                                data={'user': member.user.id, 'club': instance.club.id, 'honor': 1,'honor': 0,'goal':0,'mvp':0})
+                                data={'user': member.user.id, 'club': instance.club.id, 'honor': 1,'contribute': contribute-1,'goal':0,'mvp':0})
                             if usersHonorSerializer.is_valid():
                                 usersHonorSerializer.save()
 
