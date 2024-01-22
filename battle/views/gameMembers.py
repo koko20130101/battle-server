@@ -65,38 +65,46 @@ class GameMembersViewSet(viewsets.ModelViewSet):
             raise exceptions.AuthenticationFailed(
                 {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
 
-    def perform_update(self, serializer):
+    def update(self, request, *args, **kwargs):
         # 修改参赛人员信息
-        user = self.request.user
-        goal = self.request.data.get('goal')
-        mvp = self.request.data.get('mvp')
+        partial = kwargs.pop('partial', False)
         instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+
+        user = request.user
+        goal = request.data.get('goal')
+        assist = request.data.get('assist')
+
         user_blub = UsersClubs.objects.filter(
             user_id=user.id, club_id=instance.club.id).first()
         dif = goal - instance.goal
+        difAssist = assist - instance.assist
         if user_blub and user_blub.role in [1, 2]:
             userHonor = UsersHonor.objects.filter(user=instance.user,club=instance.club).first()
             if not userHonor and not instance.remarks:
                 # 创建荣誉
-                userHonor = UsersHonorSerializer(
-                                data={'user': instance.user.id, 'club': user_blub.club.id, 'honor': 0,'goal':0,'mvp':0})
-                if userHonor.is_valid():
-                    userHonor.save()
+                userHonorSerializer = UsersHonorSerializer(
+                                data={'user': instance.user.id, 'club': user_blub.club.id, 'honor': 0,'goal':0,'assist':0})
+                if userHonorSerializer.is_valid():
+                    userHonor = userHonorSerializer.save()
+            canSet = True if (instance.game.start_time and datetime.now().timestamp() > instance.game.start_time.timestamp()) else False
+            if (dif != 0 or difAssist != 0) and not canSet:
+                return Response({'msg': '还未到开赛时间'}, status.HTTP_403_FORBIDDEN)
             if not instance.remarks:
                 if type(goal)== int:
                     userHonor.goal += dif
                     userHonor.save()
-                if mvp == True and mvp != instance.mvp:
-                    userHonor.mvp += 1
-                    userHonor.save()
-                if mvp == False and mvp != instance.mvp and userHonor.mvp > 0:
-                    userHonor.mvp -= 1
+                if type(assist) == int:
+                    userHonor.assist += difAssist
                     userHonor.save()
                 
-
-            serializer.save()
+            if serializer.is_valid():
+                serializer.save()
+            if getattr(instance, '_prefetched_objects_cache', None):
+                instance._prefetched_objects_cache = {}
+            return Response({'msg': 'OK'}, status.HTTP_200_OK)
         else:
-            Response({'msg': '非法操作'}, status.HTTP_503_SERVICE_UNAVAILABLE)
+            return Response({'msg': '非法操作'}, status.HTTP_503_SERVICE_UNAVAILABLE)
 
     def destroy(self, request, *args, **kwargs):
         # 退出比赛

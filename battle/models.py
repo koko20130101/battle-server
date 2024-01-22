@@ -26,8 +26,8 @@ class UsersHonor(models.Model):
     honor = models.IntegerField(default=0, blank=True)
     # 进球数
     goal = models.IntegerField(default=0, blank=True)
-    # mvp次数
-    mvp = models.IntegerField(default=0, blank=True)
+    # 助攻次数
+    assist = models.IntegerField(default=0, blank=True)
     # 贡献
     contribute = models.IntegerField(default=0, blank=True)
 
@@ -89,6 +89,9 @@ class UsersClubs(models.Model):
 
 class Games(models.Model):
     '''足球比赛'''
+    # 创建者
+    creator = models.ForeignKey(
+        'battle.Users', on_delete=models.DO_NOTHING, null=True)
     # 标题
     title = models.CharField(max_length=50, null=True, blank=True)
     # 标签
@@ -146,8 +149,9 @@ class GameMembers(models.Model):
     remarks = models.CharField(max_length=30, blank=True,  null=True)
     # 进球数
     goal = models.IntegerField(default=0)
-    # 最佳
-    mvp = models.BooleanField(default=False)
+    # 助攻
+    assist = models.IntegerField(default=0)
+    # 分组
     group = models.IntegerField(default=0)
     # 费用
     cost = models.CharField(max_length=50, blank=True,  null=True)

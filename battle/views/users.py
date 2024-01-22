@@ -128,14 +128,14 @@ class UsersViewSet(viewsets.ModelViewSet):
             honor = 0
             contribute = 0
             goal = 0
-            mvp = 0
+            assist = 0
             for i in honors:
                 honor += i.honor
                 contribute += i.contribute
                 goal += i.goal
-                mvp += i.mvp
+                assist += i.assist
             serializer = self.get_serializer(instance)
-            return Response({'honor':honor,'contribute':contribute,'goal':goal,'mvp':mvp,**serializer.data})
+            return Response({'honor':honor,'contribute':contribute,'goal':goal,'assist':assist,**serializer.data})
         else:
             return Response({
                 'msg': '您还未注册',

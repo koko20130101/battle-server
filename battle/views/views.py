@@ -2,58 +2,9 @@ from rest_framework import viewsets, permissions, status, exceptions
 from django.db.models import Q
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from battle.serializers import ApplySerializer, UsersClubsSerializer, UploadImagesSerializer, AdvertSerializer, MessageSerializer
-from battle.models import Clubs, UsersClubs, Apply,  UploadImages, Advert, Message
-from battle.permissions import ReadOnly, IsSuperUser
-
-
-class MembersViewSet(viewsets.ModelViewSet):
-    '''球队成员视图集'''
-    queryset = UsersClubs.objects.all()
-    serializer_class = UsersClubsSerializer
-    permission_classes = [permissions.IsAuthenticated, ReadOnly]
-    # 指定可以过滤字段
-    # filterset_fields = ['playground_name']
-    # 对特定字段进行排序,指定排序的字段
-    ordering_fields = ['id']
-
-    def list(self, request, *args, **kwargs):
-        user = request.user
-        clubId = request.GET.get('clubId')
-        # 是否是球队成员
-        members = self.filter_queryset(
-            self.get_queryset()).filter(user=user, club=clubId)
-
-        if members.first():
-            queryset = self.filter_queryset(
-                self.get_queryset()).filter(club=clubId)
-            page = self.paginate_queryset(queryset)
-        else:
-            page = self.paginate_queryset(members)
-
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-        else:
-            serializer = self.get_serializer(queryset, many=True)
-        return Response(serializer.data, status.HTTP_200_OK)
-
-    def create(self, request, *args, **kwargs):
-        raise exceptions.AuthenticationFailed(
-            {'status': status.HTTP_403_FORBIDDEN, 'msg': '您无权操作'})
-
-    def update(self, request, *args, **kwargs):
-        raise exceptions.AuthenticationFailed(
-            {'status': status.HTTP_403_FORBIDDEN, 'msg': '您无权操作'})
-
-    def retrieve(self, request, *args, **kwargs):
-        raise exceptions.AuthenticationFailed(
-            {'status': status.HTTP_403_FORBIDDEN, 'msg': '您无权查看'})
-
-    def destroy(self, request, *args, **kwargs):
-        # 不能删除
-        raise exceptions.AuthenticationFailed(
-            {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
-
+from battle.serializers import ApplySerializer, UploadImagesSerializer, AdvertSerializer, MessageSerializer
+from battle.models import Clubs, Apply,  UploadImages, Advert, Message
+from battle.permissions import ReadOnly
 
 class ApplyViewSet(viewsets.ModelViewSet):
     queryset = Apply.objects.all()

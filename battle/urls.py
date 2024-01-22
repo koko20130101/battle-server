@@ -1,11 +1,11 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from battle.views import views_admin, views, account,  users, clubs, games, gameMembers, playgrounds, battleApply
+from battle.views import views_admin, views, account,  users, clubs, members,games, gameMembers, playgrounds, battleApply
 
 router = DefaultRouter(trailing_slash=False)
 router.register(r'users', users.UsersViewSet)
 router.register(r'clubs', clubs.ClubsViewSet)
-router.register(r'members', views.MembersViewSet)
+router.register(r'members', members.MembersViewSet)
 router.register(r'apply', views.ApplyViewSet)
 router.register(r'playgrounds', playgrounds.PlaygroundsViewSet)
 router.register(r'games', games.GamesViewSet)

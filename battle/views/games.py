@@ -69,6 +69,7 @@ class GamesViewSet(viewsets.ModelViewSet):
             # 只有超级管理员和管理员才能发布比赛
             club = Clubs.objects.filter(id=clubId).first()
             serializer.save(club=club)
+            serializer.save(creator=user)
             return Response({'msg': '创建成功'}, status.HTTP_200_OK)
         else:
             raise exceptions.AuthenticationFailed(
@@ -77,18 +78,17 @@ class GamesViewSet(viewsets.ModelViewSet):
     def destroy(self, request, *args, **kwargs):
         # 删除
         instance = self.get_object()
-        user = self.request.user
+        user = request.user
         user_blub = UsersClubs.objects.filter(
             user_id=user.id, club_id=instance.club).first()
-        if user_blub and user_blub.role in [1, 2]:
+        if user_blub and (user_blub.role == 1 or instance.creator == user):
             if instance.status == 2:
                 return Response({'msg': '比赛已结束，不能删除'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
             else:
                 instance.delete()
                 return Response({'msg': '删除成功'}, status=status.HTTP_200_OK)
         else:
-            raise exceptions.AuthenticationFailed(
-                {'status': status.HTTP_403_FORBIDDEN, 'msg': '您无权操作'})
+            return Response({'msg': '您无权操作'},status=status.HTTP_403_FORBIDDEN)
 
     def perform_update(self, serializer):
         # 编辑
@@ -156,7 +156,6 @@ class GamesViewSet(viewsets.ModelViewSet):
             activeMembers = gameMembersInstance if instance.max_people == 0 else gameMembersInstance[
                 0:instance.max_people]
 
-            # gameMembersIds = list(i.user.id for i in activeMembers)
             # 本人参加
             gameMembersIdsOnly = list(i.user.id for i in activeMembers if i.remarks == None)
             # 有备注的ID
