@@ -119,7 +119,7 @@ class GameMembersViewSet(viewsets.ModelViewSet):
                 return Response({'msg': '比赛已结束，不能取消'}, status.HTTP_403_FORBIDDEN)
             if user_blub.role in [1, 2]:
                 if userHonor and not instance.remarks:
-                    userHonor.mvp -= 1 if instance.mvp else 0
+                    userHonor.assist -= userHonor.assist
                     userHonor.goal -= instance.goal
                     userHonor.save()
                 instance.delete()
@@ -130,14 +130,14 @@ class GameMembersViewSet(viewsets.ModelViewSet):
                         return Response({'msg': '超过取消时间，请联系管理员'}, status.HTTP_403_FORBIDDEN)
                     else:
                         if userHonor and not instance.remarks:
-                            userHonor.mvp -= 1 if instance.mvp else 0
+                            userHonor.assist -= instance.assist
                             userHonor.goal -= instance.goal
                             userHonor.save()
                         instance.delete()
                         return Response({'msg': '取消成功'}, status.HTTP_204_NO_CONTENT)
                 else:
                     if userHonor and not instance.remarks:
-                        userHonor.mvp -= 1 if instance.mvp else 0
+                        userHonor.assist -= userHonor.assist
                         userHonor.goal -= instance.goal
                         userHonor.save()
                     instance.delete()
