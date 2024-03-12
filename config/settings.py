@@ -98,17 +98,6 @@ DATABASES = {
             'init_command': 'SET foreign_key_checks = 0',
         }
     },
-    # 'default': {
-    #     'ENGINE': 'django.db.backends.mysql',
-    #     'NAME': 'battleDB',
-    #     'USER': 'battle',
-    #     'PASSWORD': 'Wbl7&9$)8897',
-    #     'HOST': '127.0.0.1',
-    #     'PROT': '3306',
-    #     'OPTIONS': {
-    #         'init_command': 'SET foreign_key_checks = 0',
-    #     }
-    # },
 }
 
 
