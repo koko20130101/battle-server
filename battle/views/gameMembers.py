@@ -1,5 +1,6 @@
 from rest_framework import viewsets, permissions, status, exceptions
 from rest_framework.response import Response
+from rest_framework.decorators import action
 from battle.serializers import GameMembersSerializer,UsersHonorSerializer
 from battle.models import UsersClubs, Games, GameMembers,UsersHonor
 from config.settings import APP_ID, SECRET
@@ -79,7 +80,8 @@ class GameMembersViewSet(viewsets.ModelViewSet):
             user_id=user.id, club_id=instance.club.id).first()
         dif = goal - instance.goal
         difAssist = assist - instance.assist
-        if user_blub and user_blub.role in [1, 2]:
+        # 管理员和球员自己可以设置进球
+        if user_blub and (user_blub.role in [1, 2] or user == instance.user):
             userHonor = UsersHonor.objects.filter(user=instance.user,club=instance.club).first()
             if not userHonor and not instance.remarks:
                 # 创建荣誉
@@ -145,3 +147,19 @@ class GameMembersViewSet(viewsets.ModelViewSet):
         else:
             raise exceptions.AuthenticationFailed(
                 {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
+
+    @action(methods=['POST'], detail=False, permission_classes=[])
+    def joinGroup(self, request, *args, **kwargs):
+        # 加入分组
+        user = request.user
+        id = request.data.get('id')
+        group = request.data.get('group')
+        member_instance = self.filter_queryset(self.get_queryset()).filter(id=id).first()
+        user_blub = UsersClubs.objects.filter(
+            user_id=user.id, club_id=member_instance.club).first()
+        if user_blub and ( user_blub.role in [1, 2] or user == member_instance.user):
+                member_instance.group = group
+                member_instance.save()
+                return Response({'msg': 'ok'}, status.HTTP_200_OK)
+        else:
+            return Response({'msg': '非法操作'}, status.HTTP_403_FORBIDDEN)
