@@ -157,7 +157,8 @@ class GameMembersViewSet(viewsets.ModelViewSet):
         member_instance = self.filter_queryset(self.get_queryset()).filter(id=id).first()
         user_blub = UsersClubs.objects.filter(
             user_id=user.id, club_id=member_instance.club).first()
-        if user_blub and ( user_blub.role in [1, 2] or user == member_instance.user):
+        # if user_blub and ( user_blub.role in [1, 2] or user == member_instance.user):
+        if user_blub and user_blub.role in [1, 2]:
                 member_instance.group = group
                 member_instance.save()
                 return Response({'msg': 'ok'}, status.HTTP_200_OK)
