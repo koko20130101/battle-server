@@ -163,8 +163,8 @@ class GamesViewSet(viewsets.ModelViewSet):
             # 去重
             gameMembersIdsHasRemarksOnly = list(set(gameMembersIdsHasRemarks))
 
-            if instance.original_price == 0 and instance.cost == 0:
-                return Response({'msg': '场租原价或费用不能为空'}, status.HTTP_403_FORBIDDEN)
+            # if instance.original_price == 0 and instance.cost == 0:
+            #     return Response({'msg': '场租原价或费用不能为空'}, status.HTTP_403_FORBIDDEN)
             if not instance.playground:
                 return Response({'msg': '场地不能为空'}, status.HTTP_403_FORBIDDEN)
             if len(activeMembers) == 0:

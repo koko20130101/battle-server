@@ -155,8 +155,8 @@ class GamesSerializer(serializers.ModelSerializer):
             t2 = time.strptime(
                 data['end_time'], '%Y-%m-%dT%H:%M:%S+08:00')
             d2 = datetime.strptime(data['end_time'], '%Y-%m-%dT%H:%M:%S+08:00')
-            if (d2+timedelta(hours=24)).timestamp() > datetime.now().timestamp() > d2.timestamp():
-                # 可结算：结束时间之后12小时内可结算
+            if (d2+timedelta(hours=72)).timestamp() > datetime.now().timestamp() > d2.timestamp():
+                # 可结算：结束时间之后72小时内可结算
                 data['canSettlement'] = True
             data['game_date'] = time.strftime('%Y-%m-%d', t1)
             data['start_time'] = time.strftime('%H:%M', t1)
