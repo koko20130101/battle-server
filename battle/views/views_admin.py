@@ -1,8 +1,8 @@
 from rest_framework import viewsets, permissions, status
 from rest_framework.decorators import action
 from rest_framework.response import Response
-from battle.serializers import AdvertSerializer, UploadImagesSerializer, MessageSerializer, UsersSerializer, ClubsSerializer
-from battle.models import UploadImages, Message, Advert, Users, Clubs
+from battle.serializers import AdvertSerializer, UploadImagesSerializer, MessageSerializer, UsersSerializer, ClubsSerializer,GamesSerializer
+from battle.models import UploadImages, Message, Advert, Users, Clubs,Games
 from battle.permissions import IsSuperUser
 import datetime
 # django自带的验证机制
@@ -146,3 +146,23 @@ class AdminClubsViewSet(viewsets.ModelViewSet):
             instance.hot = hot
             instance.save()
             return Response({'msg': 'ok'}, status.HTTP_200_OK)
+
+class AdminGamesViewSet(viewsets.ModelViewSet):
+    '''球队管理'''
+    queryset = Games.objects.all()
+    serializer_class = GamesSerializer
+    permission_classes = [permissions.IsAuthenticated, IsSuperUser]
+    # 指定可以过滤字段
+    filterset_fields = ['status', 'club']
+
+    def create(self, request, *args, **kwargs):
+        return Response({'msg': '无权操作'},
+                        status.HTTP_403_FORBIDDEN)
+
+    def update(self, request, *args, **kwargs):
+        return Response({'msg': '无权操作'},
+                        status.HTTP_403_FORBIDDEN)
+
+    def destroy(self, request, *args, **kwargs):
+        return Response({'msg': '无权操作'},
+                        status.HTTP_403_FORBIDDEN)
