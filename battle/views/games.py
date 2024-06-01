@@ -98,7 +98,7 @@ class GamesViewSet(viewsets.ModelViewSet):
         instance = self.get_object()
         user_blub = UsersClubs.objects.filter(
             user_id=user.id, club_id=instance.club).first()
-        if battle or gameStatus != instance.status:
+        if gameStatus != instance.status:
             return Response({'msg': '非法操作'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
 
         if user_blub and user_blub.role in [1, 2]:
