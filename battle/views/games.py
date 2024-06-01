@@ -287,7 +287,7 @@ class GamesViewSet(viewsets.ModelViewSet):
                 # 设置个人荣誉
                 for user_id in gameMembersIdsOnly:
                     if instance.status == 0:
-                        userHonor = UsersHonor.objects.filter(user_id=user_id,club=instance.club).first()
+                        userHonor = UsersHonor.objects.filter(user_id=user_id,club=instance.club,year=datetime.now().strftime('%Y'),month=datetime.now().strftime('%m')).first()
                         if userHonor:
                             userHonor.honor += 1
                             userHonor.save()
@@ -300,7 +300,7 @@ class GamesViewSet(viewsets.ModelViewSet):
                 # 设置贡献
                 for user_id in gameMembersIdsHasRemarksOnly:
                     if instance.status == 0:
-                        userHonor = UsersHonor.objects.filter(user_id=user_id,club=instance.club).first()
+                        userHonor = UsersHonor.objects.filter(user_id=user_id,club=instance.club,year=datetime.now().strftime('%Y'),month=datetime.now().strftime('%m')).first()
                         contribute = gameMembersIdsHasRemarks.count(user_id)
                         if userHonor:
                             userHonor.contribute += contribute

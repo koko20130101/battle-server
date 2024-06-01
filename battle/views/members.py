@@ -21,6 +21,7 @@ class MembersViewSet(viewsets.ModelViewSet):
         user = request.user
         clubId = request.GET.get('clubId')
         year = request.GET.get('year')
+        month = request.GET.get('month')
         # 是否是球队成员
         members = self.filter_queryset(
             self.get_queryset()).filter(user=user, club=clubId)
@@ -38,14 +39,29 @@ class MembersViewSet(viewsets.ModelViewSet):
             serializer = self.get_serializer(queryset, many=True)
         result=[]
         for member in serializer.data:
-            honorInfo = UsersHonor.objects.filter(year=year,user_id=member['user'],club_id=member['club']).first()
+            honorInfo = UsersHonor.objects.filter(user_id=member['user'],club_id=member['club'])
+            if year:
+                honorInfo = honorInfo.filter(year=year)
+            if month:
+                honorInfo = honorInfo.filter(month=month)
+            honorInfo = honorInfo.values()
+            
             member.pop('user')
             member.pop('club')
             if honorInfo:
-                member['honor'] = honorInfo.honor
-                member['contribute'] = honorInfo.contribute
-                member['goal'] = honorInfo.goal
-                member['assist'] = honorInfo.assist
+                honorNum = 0
+                contributeNum = 0
+                goalNum = 0
+                assistNum = 0
+                for honorItem in honorInfo:
+                    honorNum += honorItem['honor']
+                    contributeNum += honorItem['contribute']
+                    goalNum += honorItem['goal']
+                    assistNum += honorItem['assist']
+                member['honor'] = honorNum
+                member['contribute'] = contributeNum
+                member['goal'] = goalNum
+                member['assist'] = assistNum
             else:
                 member['honor'] = 0
                 member['contribute'] = 0

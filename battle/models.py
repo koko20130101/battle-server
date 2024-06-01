@@ -18,6 +18,7 @@ class Users(AbstractUser):
 class UsersHonor(models.Model):
     '''用户荣誉'''
     year = models.CharField(max_length=4, default=datetime.now().strftime('%Y'))
+    month = models.CharField(max_length=4, default=datetime.now().strftime('%m'))
     user = models.ForeignKey(
         'battle.Users', related_name='users_honor_set', on_delete=models.CASCADE)
     club = models.ForeignKey(
