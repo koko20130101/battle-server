@@ -43,11 +43,11 @@ class GameMembersViewSet(viewsets.ModelViewSet):
         if not clubId:
             return Response({'msg': '球队ID不能为空'}, status.HTTP_403_FORBIDDEN)
 
-        user_blub = UsersClubs.objects.filter(
+        user_cblub = UsersClubs.objects.filter(
             user_id=user.id, club_id=clubId).first()
         game = Games.objects.get(id=gameId)
-
-        if user_blub and game.club.id == user_blub.club_id:
+        print(user_cblub.group)
+        if user_cblub and game.club.id == user_cblub.club_id:
             queryset = self.filter_queryset(
                 self.get_queryset()).filter(game=gameId, user=user.id).first()
 
@@ -60,6 +60,7 @@ class GameMembersViewSet(viewsets.ModelViewSet):
             if serializer.is_valid():
                 serializer.save(club=game.club)
                 serializer.save(game=game)
+                serializer.save(group=user_cblub.group)
                 serializer.save(user=user)
                 return Response({'msg': '报名成功'}, status.HTTP_201_CREATED)
         else:

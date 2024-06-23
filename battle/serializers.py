@@ -58,7 +58,7 @@ class UsersClubsSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
     def to_representation(self, instance):
-        usefields = ['id', 'role', 'nickName', 'avatar','user','club']
+        usefields = ['id', 'role', 'nickName', 'avatar','user','club','group']
         data = super().to_representation(instance)
         resData = {}
         for field_name in data:

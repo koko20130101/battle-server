@@ -160,3 +160,30 @@ class ClubsViewSet(viewsets.ModelViewSet):
             return Response({'msg': '操作成功'}, status.HTTP_200_OK)
         else:
             return Response({'msg': '非法操作'}, status.HTTP_403_FORBIDDEN)
+
+    @action(methods=['POST'], detail=False, permission_classes=[permissions.IsAuthenticated])
+    def setClubUserGroup(self, request, *args, **kwargs):
+        # 设置分队
+        clubId = request.data.get('clubId')
+        memberId = request.data.get('memberId')
+        group = request.data.get('group')
+        user = request.user
+
+        if not clubId:
+            return Response({'msg': '球队ID不能为空'}, status.HTTP_503_SERVICE_UNAVAILABLE)
+        if not memberId:
+            return Response({'msg': '队员ID不能为空'}, status.HTTP_503_SERVICE_UNAVAILABLE)
+
+        instance = self.get_queryset().get(id=clubId)
+        user_blub = instance.users_clubs_set.all().values().filter(
+            user_id=user.id, club_id=clubId).first()
+
+        if user_blub and user_blub.get('role') in [1,2]:
+            user_blub = instance.users_clubs_set.all().filter(
+                id=memberId, club_id=clubId).first()
+            print(group)
+            user_blub.group = group if group else 999
+            user_blub.save()
+            return Response({'msg': '操作成功'}, status.HTTP_200_OK)
+        else:
+            return Response({'msg': '非法操作'}, status.HTTP_403_FORBIDDEN)

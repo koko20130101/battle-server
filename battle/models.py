@@ -83,6 +83,8 @@ class UsersClubs(models.Model):
         'battle.Clubs', related_name='users_clubs_set', on_delete=models.CASCADE)
     # 用户在俱乐部中的角色， 1：超级管理  2：管理员  3：会员
     role = models.IntegerField(default=3)
+    # 分队
+    group = models.IntegerField(default=999)
 
     class Meta:
         db_table = 'bt_users_clubs'
