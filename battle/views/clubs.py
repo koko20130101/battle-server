@@ -150,9 +150,9 @@ class ClubsViewSet(viewsets.ModelViewSet):
         instance = self.get_queryset().get(id=clubId)
         user_blub = instance.users_clubs_set.all().values().filter(
             user_id=user.id, club_id=clubId).first()
-        # print(user.id)
+        # print(user_blub['id'])
 
-        if user_blub and user_blub.get('role') == 1 and str(instance.creator.id) != user.id:
+        if user_blub and user_blub.get('role') == 1 and user_blub['id'] != memberId:
             user_blub = instance.users_clubs_set.all().filter(
                 id=memberId, club_id=clubId).first()
             user_blub.role = 2 if user_blub.role == 3 else 3
