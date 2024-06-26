@@ -83,7 +83,8 @@ class GameMembersViewSet(viewsets.ModelViewSet):
         difAssist = assist - instance.assist
         # 管理员和球员自己可以设置进球
         if user_blub and (user_blub.role in [1, 2] or user == instance.user):
-            userHonor = UsersHonor.objects.filter(user=instance.user,club=instance.club).first()
+            # 查寻当月的荣誉记录
+            userHonor = UsersHonor.objects.filter(user=instance.user,club=instance.club,year=datetime.now().strftime('%Y'),month=datetime.now().strftime('%m')).first()
             if not userHonor and not instance.remarks:
                 # 创建荣誉
                 userHonorSerializer = UsersHonorSerializer(
