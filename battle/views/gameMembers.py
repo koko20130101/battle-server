@@ -88,7 +88,7 @@ class GameMembersViewSet(viewsets.ModelViewSet):
             if not userHonor and not instance.remarks:
                 # 创建荣誉
                 userHonorSerializer = UsersHonorSerializer(
-                                data={'user': instance.user.id, 'club': user_blub.club.id, 'honor': 0,'goal':0,'assist':0})
+                                data={'user': instance.user.id, 'club': user_blub.club.id, 'honor': 0,'goal':0,'assist':0,"year":datetime.now().strftime('%Y'),"month":datetime.now().strftime('%m')})
                 if userHonorSerializer.is_valid():
                     userHonor = userHonorSerializer.save()
             canSet = True if (instance.game.start_time and datetime.now().timestamp() > instance.game.start_time.timestamp()) else False

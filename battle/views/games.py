@@ -294,7 +294,7 @@ class GamesViewSet(viewsets.ModelViewSet):
                         else:
                             # 创建记录
                             usersHonorSerializer = UsersHonorSerializer(
-                                data={'user':user_id, 'club': instance.club.id, 'honor': 1,'goal':0,'mvp':0})
+                                data={'user':user_id, 'club': instance.club.id, 'honor': 1,'goal':0,'assist':0,"year":datetime.now().strftime('%Y'),"month":datetime.now().strftime('%m')})
                             if usersHonorSerializer.is_valid():
                                 usersHonorSerializer.save()
                 # 设置贡献
@@ -308,7 +308,7 @@ class GamesViewSet(viewsets.ModelViewSet):
                         else:
                             # 创建记录
                             usersHonorSerializer = UsersHonorSerializer(
-                                data={'user': user_id, 'club': instance.club.id,'contribute': contribute,'goal':0,'mvp':0})
+                                data={'user': user_id, 'club': instance.club.id,'contribute': contribute,'goal':0,'assist':0,"year":datetime.now().strftime('%Y'),"month":datetime.now().strftime('%m')})
                             if usersHonorSerializer.is_valid():
                                 usersHonorSerializer.save()
 
