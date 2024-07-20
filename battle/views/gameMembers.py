@@ -60,7 +60,8 @@ class GameMembersViewSet(viewsets.ModelViewSet):
             if serializer.is_valid():
                 serializer.save(club=game.club)
                 serializer.save(game=game)
-                serializer.save(group=user_cblub.group)
+                # 2024-7-14 取消自动分组
+                # serializer.save(group=user_cblub.group)
                 serializer.save(user=user)
                 return Response({'msg': '报名成功'}, status.HTTP_201_CREATED)
         else:
