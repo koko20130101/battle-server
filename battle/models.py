@@ -3,7 +3,6 @@ from django.contrib.auth.models import AbstractUser
 from common.utils import get_upload_to
 from datetime import datetime
 
-
 class Users(AbstractUser):
     '''用户'''
     open_id = models.CharField(max_length=100, blank=False)
@@ -18,7 +17,7 @@ class Users(AbstractUser):
 class UsersHonor(models.Model):
     '''用户荣誉'''
     year = models.CharField(max_length=4, default=datetime.now().strftime('%Y'))
-    month = models.CharField(max_length=4, default=datetime.now().strftime('%m'))
+    month = models.IntegerField(default=datetime.now().month)
     user = models.ForeignKey(
         'battle.Users', related_name='users_honor_set', on_delete=models.CASCADE)
     club = models.ForeignKey(
@@ -27,8 +26,12 @@ class UsersHonor(models.Model):
     honor = models.IntegerField(default=0, blank=True)
     # 进球数
     goal = models.IntegerField(default=0, blank=True)
+    # 外战进球数
+    goal_out = models.IntegerField(default=0, blank=True)
     # 助攻次数
     assist = models.IntegerField(default=0, blank=True)
+    # 外战助攻次数
+    assist_out = models.IntegerField(default=0, blank=True)
     # 贡献
     contribute = models.IntegerField(default=0, blank=True)
 
@@ -43,6 +46,8 @@ class Clubs(models.Model):
     club_logo = models.TextField(blank=True)
     area = models.CharField(max_length=50, null=True)
     area_code = models.CharField(max_length=50, null=True)
+    # 随机码
+    code = models.CharField(max_length=24, null=True)
     # 创建者
     creator = models.ForeignKey(
         'battle.Users', related_name='clubs_set1', on_delete=models.DO_NOTHING, null=True)
@@ -124,6 +129,8 @@ class Games(models.Model):
     cost = models.FloatField(blank=True)
     # 比赛状态  0：比赛中  1：比赛结束
     status = models.IntegerField(default=0)
+    # 比赛类型  1：内战 2：外战
+    game_type = models.IntegerField(default=0)
     # 简介
     brief = models.TextField(blank=True)
     # 分组

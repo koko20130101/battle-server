@@ -14,7 +14,7 @@ class ClubsSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         path = self.context['request'].path
         listfields = ['id', 'short_name', 'club_logo']
-        usefields = ['id', 'club_name', 'short_name', 'club_logo', 'club_type', 'hot',
+        usefields = ['id', 'club_name', 'short_name', 'club_logo', 'club_type', 'code','hot',
                      'sort', 'honor', 'credit', 'brief', 'creator', 'need_apply', 'area', 'area_code', 'main_playground']
         data = super().to_representation(instance)
         resData = {}
@@ -26,7 +26,9 @@ class ClubsSerializer(serializers.ModelSerializer):
         else:
             # 详情页输出
             members = UsersSerializer(instance.members, many=True).data
+            games = Games.objects.all().filter(club=instance.id,status=1)
             resData['memberTotal'] = len(members)
+            resData['finishGameTotal'] = len(games)
             for field_name in data:
                 if field_name in usefields:
                     resData[field_name] = data[field_name]
@@ -132,7 +134,7 @@ class GameMembersSerializer(serializers.ModelSerializer):
 class GamesSerializer(serializers.ModelSerializer):
     clubName = serializers.ReadOnlyField(source='club.short_name')
     clubLogo = serializers.ReadOnlyField(source='club.club_logo')
-    gameType = serializers.ReadOnlyField(source='club.club_type')
+    clubType = serializers.ReadOnlyField(source='club.club_type')
     rivalName = serializers.ReadOnlyField(source='battle.club.short_name')
     rivalLogo = serializers.ReadOnlyField(source='battle.club.club_logo')
     site = serializers.ReadOnlyField(
@@ -144,9 +146,9 @@ class GamesSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         path = self.context['request'].path
-        homefields = ['id', 'game_date', 'start_time', 'end_time', 'competition', 'gameType', 'playground', 'min_people', 'tag',
+        homefields = ['id', 'game_date', 'start_time', 'end_time', 'competition', 'clubType', 'playground', 'min_people', 'tag',
                       'site', 'rivalName', 'rivalLogo', 'clubName', 'clubLogo','creator']
-        usefields = ['id', 'title', 'game_date', 'start_time', 'end_time', 'open_battle', 'competition', 'gameType', 'playground',
+        usefields = ['id', 'title', 'game_date', 'start_time', 'end_time', 'open_battle', 'competition','game_type', 'clubType', 'playground',
                      'site', 'min_people', 'max_people', 'status', 'brief', 'rivalName', 'rivalLogo', 'club', 'clubName', 'clubLogo', 'tag']
         data = super().to_representation(instance)
         if data['start_time'] and data['end_time']:

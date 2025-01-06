@@ -1,5 +1,6 @@
 from rest_framework import viewsets, permissions, status, exceptions
 from pymysql import NULL
+from django.db.models import Q
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from battle.serializers import GamesSerializer, AccountRecordSerializer,UsersHonorSerializer
@@ -38,10 +39,10 @@ class GamesViewSet(viewsets.ModelViewSet):
         # 详情
         user = request.user
         instance = self.get_object()
-        user_blub = UsersClubs.objects.filter(
+        user_club = UsersClubs.objects.filter(
             user_id=user.id, club_id=instance.club).first()
         serializer = self.get_serializer(instance)
-        if user_blub:
+        if user_club:
             # 队员
             return Response({'isMember': True, **serializer.data}, status.HTTP_200_OK)
         else:
@@ -63,9 +64,9 @@ class GamesViewSet(viewsets.ModelViewSet):
             raise exceptions.AuthenticationFailed(
                 {'status': status.HTTP_403_FORBIDDEN, 'msg': '球队ID不能为空'})
 
-        user_blub = UsersClubs.objects.filter(
+        user_club = UsersClubs.objects.filter(
             user_id=user.id, club_id=clubId).first()
-        if user_blub and user_blub.role in [1, 2]:
+        if user_club and user_club.role in [1, 2]:
             # 只有超级管理员和管理员才能发布比赛
             club = Clubs.objects.filter(id=clubId).first()
             serializer.save(club=club)
@@ -79,9 +80,9 @@ class GamesViewSet(viewsets.ModelViewSet):
         # 删除
         instance = self.get_object()
         user = request.user
-        user_blub = UsersClubs.objects.filter(
+        user_club = UsersClubs.objects.filter(
             user_id=user.id, club_id=instance.club).first()
-        if user_blub and (user_blub.role == 1 or instance.creator == user):
+        if user_club and (user_club.role == 1 or instance.creator == user):
             if instance.status == 2:
                 return Response({'msg': '比赛已结束，不能删除'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
             else:
@@ -89,20 +90,26 @@ class GamesViewSet(viewsets.ModelViewSet):
                 return Response({'msg': '删除成功'}, status=status.HTTP_200_OK)
         else:
             return Response({'msg': '您无权操作'},status=status.HTTP_403_FORBIDDEN)
-
-    def perform_update(self, serializer):
-        # 编辑
-        user = self.request.user
-        gameStatus = self.request.data.get('status')
-        battle = self.request.data.get('battle')
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        user = request.user
+        gameStatus = request.data.get('status')
+        game_type = request.data.get('game_type')
         instance = self.get_object()
-        user_blub = UsersClubs.objects.filter(
-            user_id=user.id, club_id=instance.club).first()
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
         if gameStatus != instance.status:
             return Response({'msg': '非法操作'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
-
-        if user_blub and user_blub.role in [1, 2]:
+        user_club = UsersClubs.objects.filter(
+            user_id=user.id, club_id=instance.club).first()
+        
+        if game_type != instance.game_type:
+            gameMembersInstance = GameMembers.objects.all().filter(Q(game=instance.id,club=instance.club.id,assist__gt=0) | Q(game=instance.id,club=instance.club.id,goal__gt=0))
+            if gameMembersInstance:
+                return Response({'msg': '已记录比赛数据，不能修改类型'}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            
+        if user_club and user_club.role in [1, 2] and serializer.is_valid():
             serializer.save()
+            return Response({'msg': 'OK','data':serializer.data}, status.HTTP_200_OK)
         else:
             raise exceptions.AuthenticationFailed(
                 {'status': status.HTTP_403_FORBIDDEN, 'msg': '您无权操作'})
@@ -126,10 +133,10 @@ class GamesViewSet(viewsets.ModelViewSet):
         gameId = request.data.get('gameId')
         game_instance = self.get_queryset().get(id=gameId)
 
-        user_blub = UsersClubs.objects.filter(
+        user_club = UsersClubs.objects.filter(
             user_id=user.id, club_id=game_instance.club).first()
 
-        if user_blub and user_blub.role in [1, 2]:
+        if user_club and user_club.role in [1, 2]:
             # 只有管理员才能操作
             # 设置对手的对手为空
             game_instance.battle.battle = None
@@ -147,9 +154,9 @@ class GamesViewSet(viewsets.ModelViewSet):
         user = self.request.user
         gameId = request.data.get('gameId')
         instance = self.get_queryset().get(id=gameId)
-        user_blub = UsersClubs.objects.filter(
+        user_club = UsersClubs.objects.filter(
             user_id=user.id, club_id=instance.club.id).first()
-        if user_blub and user_blub.role in [1, 2]:
+        if user_club and user_club.role in [1, 2]:
             gameMembersInstance = GameMembers.objects.all().filter(
                 game=gameId, club=instance.club.id)
             # 有效结算人数 ---》 剔除接替者

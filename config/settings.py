@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'rest_framework.authtoken',
+    'django_filters',
     'battle',
 ]
 
@@ -87,11 +88,22 @@ WSGI_APPLICATION = 'config.wsgi.application'
 # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
 
 DATABASES = {
+    # 'default': {
+    #     'ENGINE': 'django.db.backends.mysql',
+    #     'NAME': 'battleDB',
+    #     'USER': 'root',
+    #     'PASSWORD': '123456',
+    #     'HOST': '127.0.0.1',
+    #     'PROT': '3306',
+    #     'OPTIONS': {
+    #         'init_command': 'SET foreign_key_checks = 0',
+    #     }
+    # },
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'battleDB',
-        'USER': 'root',
-        'PASSWORD': '123456',
+        'USER': 'battle',
+        'PASSWORD': 'Wbl7&9$)8897',
         'HOST': '127.0.0.1',
         'PROT': '3306',
         'OPTIONS': {

@@ -3,7 +3,8 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from battle.serializers import ClubsSerializer
 from battle.models import Clubs, UsersClubs, Apply
-
+import random
+import string
 
 class ClubsViewSet(viewsets.ModelViewSet):
     '''俱乐部视图集'''
@@ -26,7 +27,7 @@ class ClubsViewSet(viewsets.ModelViewSet):
         # 创建
         user = self.request.user
         if serializer.is_valid():
-            club = serializer.save(creator=user)
+            club = serializer.save(creator=user,code=''.join(random.sample(string.ascii_letters + string.digits, 12)))
             # 为创建者设置超级管理员角色
             club.members.add(user, through_defaults={'role': 1})
             return Response({'msg': '创建成功'}, status.HTTP_200_OK)

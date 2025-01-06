@@ -4,7 +4,17 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from battle.serializers import PlaygroundsSerializer
 from battle.models import Playgrounds, Clubs, UsersClubs, ClubsPlaygrounds, Account
+import django_filters
 
+class AreaFilter(django_filters.rest_framework.FilterSet):
+    """自定义过滤器类"""
+    area = django_filters.CharFilter(field_name='area', lookup_expr='contains') 
+    playground_name = django_filters.CharFilter(field_name='playground_name', lookup_expr='contains') 
+    # area 表示要过滤字段；lookup_expr 表示 过滤时要进行的操作，
+    # contains 表示 包含，用来进行模糊过滤
+    class Meta:
+        model = Playgrounds
+        fields = ['area','playground_name'] #查询参数，与数据库无关
 
 class PlaygroundsViewSet(viewsets.ModelViewSet):
     '''球场视图集'''
@@ -12,8 +22,7 @@ class PlaygroundsViewSet(viewsets.ModelViewSet):
     serializer_class = PlaygroundsSerializer
     permission_classes = [permissions.IsAuthenticated]
     ordering_fields = ['id']
-    # 指定可以过滤字段
-    filterset_fields = ['playground_name', 'area']
+    filterset_class = AreaFilter
 
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())

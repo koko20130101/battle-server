@@ -49,7 +49,7 @@ class GameMembersViewSet(viewsets.ModelViewSet):
         print(user_cblub.group)
         if user_cblub and game.club.id == user_cblub.club_id:
             queryset = self.filter_queryset(
-                self.get_queryset()).filter(game=gameId, user=user.id).first()
+                self.get_queryset()).filter(game=gameId, user=user.id,remarks='').first()
 
             if queryset and not remarks:
                 return Response({'msg': '多次报名请备注'}, status.HTTP_403_FORBIDDEN)
@@ -97,10 +97,20 @@ class GameMembersViewSet(viewsets.ModelViewSet):
                 return Response({'msg': '还未到开赛时间'}, status.HTTP_403_FORBIDDEN)
             if not instance.remarks:
                 if type(goal)== int:
-                    userHonor.goal += dif
+                    if instance.game.game_type == 1:
+                        # 内战进球
+                        userHonor.goal += dif
+                    if instance.game.game_type == 2:
+                        # 外战进球
+                        userHonor.goal_out += dif
                     userHonor.save()
                 if type(assist) == int:
-                    userHonor.assist += difAssist
+                    if instance.game.game_type == 1:
+                        # 内战助攻
+                        userHonor.assist += difAssist
+                    if instance.game.game_type == 2:
+                        # 外战助攻
+                        userHonor.assist_out += difAssist
                     userHonor.save()
                 
             if serializer.is_valid():

@@ -3,7 +3,7 @@ from django.db.models import Q
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from battle.serializers import UsersClubsSerializer, UsersHonorSerializer
-from battle.models import UsersClubs, UsersHonor
+from battle.models import UsersClubs, UsersHonor,Clubs
 from battle.permissions import ReadOnly
 
 
@@ -31,7 +31,7 @@ class MembersViewSet(viewsets.ModelViewSet):
                 self.get_queryset()).filter(club=clubId)
             page = self.paginate_queryset(queryset)
         else:
-            page = self.paginate_queryset(members)
+            page = self.paginate_queryset(members) 
 
         if page is not None:
             serializer = self.get_serializer(page, many=True)
@@ -86,3 +86,74 @@ class MembersViewSet(viewsets.ModelViewSet):
         # 不能删除
         raise exceptions.AuthenticationFailed(
             {'status': status.HTTP_403_FORBIDDEN, 'msg': '非法操作'})
+    
+    @action(methods=['GET'], detail=False, permission_classes=[])
+    def ranking(self, request, *args, **kwargs):
+        # 排行榜
+        code = request.GET.get('code')
+        year = request.GET.get('year')
+        startMonth = request.GET.get('startMonth')
+        endMonth = request.GET.get('endMonth')
+        if not code:
+            return Response({'msg': '球队Code不能为空'},status=status.HTTP_403_FORBIDDEN)
+        if not year:
+            return Response({'msg': '年份不能为空'},status=status.HTTP_403_FORBIDDEN)
+        if not startMonth:
+            return Response({'msg': '查询时间不能为空'},status=status.HTTP_403_FORBIDDEN)
+        # 查询球队
+        club = Clubs.objects.filter(code=code).first()
+        queryset = self.filter_queryset(
+            self.get_queryset()).filter(club=club.id)
+        serializer = self.get_serializer(queryset, many=True)
+        newMembers=[]
+        result = {}
+        for member in serializer.data:
+            honorInfo = UsersHonor.objects.filter(user_id=member['user'],club_id=member['club'],year=year)
+            if endMonth:
+                honorInfo = honorInfo.filter(Q(month__gt= int(startMonth)-1) & Q(month__lt= int(endMonth)+1) )
+            else:
+                honorInfo = honorInfo.filter(month=startMonth)
+
+            honorInfo = honorInfo.values()
+            member.pop('user')
+            member.pop('club')
+
+            if honorInfo:
+                honorNum = 0  # 出勤
+                contributeNum = 0 # 贡献
+                goalTotalNum = 0  # 总进球
+                goalNum = 0  # 内战进球
+                goalOutNum = 0  # 外战进球
+                assistNum = 0  # 内战助攻
+                assistOutNum = 0  # 内战助攻
+                assistTotalNum = 0  # 内战助攻
+                for honorItem in honorInfo:
+                    honorNum += honorItem['honor']
+                    contributeNum += honorItem['contribute']
+                    goalNum += honorItem['goal']
+                    goalOutNum += honorItem['goal_out']
+                    goalTotalNum += honorItem['goal']
+                    goalTotalNum += honorItem['goal_out']
+                    assistNum += honorItem['assist']
+                    assistOutNum += honorItem['assist_out']
+                    assistTotalNum += honorItem['assist']
+                    assistTotalNum += honorItem['assist_out']
+                member['honor'] = honorNum  # 出勤
+                member['contribute'] = contributeNum  # 贡献
+                member['goal_total'] = goalTotalNum  # 总进球
+                member['goal'] = goalNum # 内战进球
+                member['goal_out'] = goalOutNum  # 外战进球
+                member['assist_total'] = assistNum # 内战助攻
+                member['assist'] = assistNum # 内战助攻
+                member['assist_out'] = assistOutNum # 内战助攻
+                member['score'] = round(honorNum + contributeNum*0.25 + goalTotalNum + assistNum*1.2 + assistOutNum*1.2,1)
+                newMembers.append(member)
+            result['topContribute'] = sorted(newMembers,key=lambda x:x['contribute'],reverse=True)[0:1]  # 最佳贡献
+            result['topGoal'] = sorted(newMembers,key=lambda x:x['goal_total'],reverse=True)[0:1]  # 最佳射手
+            result['rankGoalOut'] = sorted(newMembers,key=lambda x:x['goal_out'],reverse=True)[0:10]  # 外战射手榜
+            result['rankGoal'] = sorted(newMembers,key=lambda x:x['goal'],reverse=True)[0:10]  # 内战射手榜
+            result['rankScore'] = sorted(newMembers,key=lambda x:x['score'],reverse=True)[0:10]  # 积分榜
+            result['rankHonor'] = sorted(newMembers,key=lambda x:x['honor'],reverse=True)[0:10]  # 出勤榜
+            result['rankAssist'] = sorted(newMembers,key=lambda x:x['assist_total'],reverse=True)[0:10]  # 助攻榜
+
+        return Response(result, status.HTTP_200_OK)
