@@ -77,6 +77,7 @@ class GameMembersViewSet(viewsets.ModelViewSet):
         user = request.user
         goal = request.data.get('goal')
         assist = request.data.get('assist')
+        mvp = request.data.get('mvp')
 
         user_blub = UsersClubs.objects.filter(
             user_id=user.id, club_id=instance.club.id).first()
@@ -111,6 +112,9 @@ class GameMembersViewSet(viewsets.ModelViewSet):
                     if instance.game.game_type == 2:
                         # 外战助攻
                         userHonor.assist_out += difAssist
+                    userHonor.save()
+                if type(mvp) == int and user_blub.role in [1, 2]:
+                    userHonor.mvp = 0 if userHonor.mvp == 1 else 1
                     userHonor.save()
                 
             if serializer.is_valid():

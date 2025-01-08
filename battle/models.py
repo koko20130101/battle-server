@@ -34,6 +34,8 @@ class UsersHonor(models.Model):
     assist_out = models.IntegerField(default=0, blank=True)
     # 贡献
     contribute = models.IntegerField(default=0, blank=True)
+    # mvp次数
+    mvp = models.IntegerField(default=0, blank=True)
 
     class Meta:
         db_table = 'bt_users_honor'
@@ -129,8 +131,8 @@ class Games(models.Model):
     cost = models.FloatField(blank=True)
     # 比赛状态  0：比赛中  1：比赛结束
     status = models.IntegerField(default=0)
-    # 比赛类型  1：内战 2：外战
-    game_type = models.IntegerField(default=0)
+    # 比赛类型  1：内战 2：外战 3:自由
+    game_type = models.IntegerField(default=1)
     # 简介
     brief = models.TextField(blank=True)
     # 分组
@@ -161,6 +163,8 @@ class GameMembers(models.Model):
     goal = models.IntegerField(default=0)
     # 助攻
     assist = models.IntegerField(default=0)
+    # mvp
+    mvp = models.IntegerField(default=0)
     # 分组
     group = models.IntegerField(default=0)
     # 费用
