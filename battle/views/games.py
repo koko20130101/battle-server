@@ -48,7 +48,7 @@ class GamesViewSet(viewsets.ModelViewSet):
         else:
             # 非队员
             usefields = ['id', 'title', 'game_date', 'start_time', 'end_time', 'open_battle', 'competition',
-                         'site', 'min_people', 'max_people', 'brief', 'rivalName', 'rivalLogo', 'club', 'clubName', 'tag']
+                         'site', 'min_people', 'max_people', 'brief', 'rivalName', 'rivalLogo', 'club', 'clubLogo','clubName', 'tag']
             resData = {'isMember': False}
             for field_name in serializer.data:
                 if field_name in usefields:
