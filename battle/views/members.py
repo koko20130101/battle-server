@@ -125,8 +125,8 @@ class MembersViewSet(viewsets.ModelViewSet):
                 goalNum = 0  # 内战进球
                 goalOutNum = 0  # 外战进球
                 assistNum = 0  # 内战助攻
-                assistOutNum = 0  # 内战助攻
-                assistTotalNum = 0  # 内战助攻
+                assistOutNum = 0  # 外战助攻
+                assistTotalNum = 0  # 助攻总和
                 mvpNum = 0  # mvp
                 for honorItem in honorInfo:
                     honorNum += honorItem['honor']
@@ -145,9 +145,9 @@ class MembersViewSet(viewsets.ModelViewSet):
                 member['goal_total'] = goalTotalNum  # 总进球
                 member['goal'] = goalNum # 内战进球
                 member['goal_out'] = goalOutNum  # 外战进球
-                member['assist_total'] = assistNum # 内战助攻
+                member['assist_total'] = assistNum # 总助攻
+                member['assist_out'] = assistOutNum # 外战助攻
                 member['assist'] = assistNum # 内战助攻
-                member['assist_out'] = assistOutNum # 内战助攻
                 member['mvp'] = mvpNum # mvp
                 member['score'] = round(honorNum + contributeNum*0.5 + goalOutNum*2 + goalNum + assistNum*1.2 + assistOutNum*2 + mvpNum*3,1)
                 newMembers.append(member)
@@ -157,7 +157,8 @@ class MembersViewSet(viewsets.ModelViewSet):
             result['rankGoal'] = sorted(newMembers,key=lambda x:x['goal'],reverse=True)[0:10]  # 内战射手榜
             result['rankScore'] = sorted(newMembers,key=lambda x:x['score'],reverse=True)[0:10]  # 积分榜
             result['rankHonor'] = sorted(newMembers,key=lambda x:x['honor'],reverse=True)[0:10]  # 出勤榜
-            result['rankAssist'] = sorted(newMembers,key=lambda x:x['assist_total'],reverse=True)[0:10]  # 助攻榜
+            result['rankAssistOut'] = sorted(newMembers,key=lambda x:x['assist_out'],reverse=True)[0:10]  # 外战助攻榜
+            result['rankAssist'] = sorted(newMembers,key=lambda x:x['assist'],reverse=True)[0:10]  # 内战助攻榜
             result['rankContribute'] = sorted(newMembers,key=lambda x:x['contribute'],reverse=True)[0:10]  #贡献榜
             result['rankMvp'] = sorted(newMembers,key=lambda x:x['mvp'],reverse=True)[0:10]  #mvp榜
 
