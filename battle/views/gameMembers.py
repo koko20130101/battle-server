@@ -83,6 +83,7 @@ class GameMembersViewSet(viewsets.ModelViewSet):
             user_id=user.id, club_id=instance.club.id).first()
         dif = goal - instance.goal
         difAssist = assist - instance.assist
+        difMvp = mvp - instance.mvp
         # 管理员和球员自己可以设置进球
         if user_blub and (user_blub.role in [1, 2] or user == instance.user):
             # 查寻当月的荣誉记录
@@ -90,14 +91,16 @@ class GameMembersViewSet(viewsets.ModelViewSet):
             if not userHonor and not instance.remarks:
                 # 创建荣誉
                 userHonorSerializer = UsersHonorSerializer(
-                                data={'user': instance.user.id, 'club': user_blub.club.id, 'honor': 0,'goal':0,'assist':0,"year":datetime.now().strftime('%Y'),"month":datetime.now().strftime('%m')})
+                                data={'user': instance.user.id, 'club': user_blub.club.id, 'honor': 0,'goal':0,'assist':0,'mvp':0,"year":datetime.now().strftime('%Y'),"month":datetime.now().strftime('%m')})
                 if userHonorSerializer.is_valid():
                     userHonor = userHonorSerializer.save()
             canSet = True if (instance.game.start_time and datetime.now().timestamp() > instance.game.start_time.timestamp()) else False
-            if (dif != 0 or difAssist != 0) and not canSet:
+            if (dif != 0 or difAssist != 0 or difMvp != 0 ) and not canSet:
                 return Response({'msg': '还未到开赛时间'}, status.HTTP_403_FORBIDDEN)
+            if datetime.now().timestamp() > (instance.game.end_time + timedelta(hours=48)).timestamp():
+                return Response({'msg': '比赛已结束两天，不能再设置'}, status.HTTP_403_FORBIDDEN)
             if not instance.remarks:
-                if type(goal)== int:
+                if type(goal) == int:
                     if instance.game.game_type == 1:
                         # 内战进球
                         userHonor.goal += dif
@@ -113,8 +116,9 @@ class GameMembersViewSet(viewsets.ModelViewSet):
                         # 外战助攻
                         userHonor.assist_out += difAssist
                     userHonor.save()
-                if type(mvp) == int and user_blub.role in [1, 2]:
-                    userHonor.mvp = 0 if userHonor.mvp == 1 else 1
+                # mvp不能大于1
+                if type(mvp) == int and user_blub.role in [1, 2] and mvp < 2:
+                    userHonor.mvp += difMvp
                     userHonor.save()
                 
             if serializer.is_valid():
