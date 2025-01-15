@@ -56,8 +56,8 @@ class MembersViewSet(viewsets.ModelViewSet):
                 for honorItem in honorInfo:
                     honorNum += honorItem['honor']
                     contributeNum += honorItem['contribute']
-                    goalNum += honorItem['goal']
-                    assistNum += honorItem['assist']
+                    goalNum += (honorItem['goal'] + honorItem['goal_out'])
+                    assistNum += (honorItem['assist'] + honorItem['assist_out'])
                 member['honor'] = honorNum
                 member['contribute'] = contributeNum
                 member['goal'] = goalNum
